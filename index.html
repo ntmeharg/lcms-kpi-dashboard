@@ -20,21 +20,18 @@
   .dash-header h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
   .dash-header p{font-size:12px;color:var(--text-muted);margin-top:4px;}
   .badge-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;}
-  .badge.green{background:rgba(52,211,153,.12);color:#34d399;}
-  .badge.yellow{background:rgba(251,191,36,.12);color:#fbbf24;}
-  .badge.red{background:rgba(248,113,113,.12);color:#f87171;}
-  .badge.blue{background:rgba(74,158,255,.12);color:#4a9eff;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;}
+  .badge.red{background:rgba(248,113,113,0.12);color:#f87171;}
+  .badge.yellow{background:rgba(251,191,36,0.12);color:#fbbf24;}
+  .badge.green{background:rgba(52,211,153,0.12);color:#34d399;}
+  .badge.blue{background:rgba(74,158,255,0.12);color:#4a9eff;}
+  .badge.muted{background:rgba(99,105,120,0.12);color:#9ba1b0;}
 
   /* NAV TABS */
   .nav-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:8px;}
   .nav-tab{padding:8px 18px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
   .nav-tab:hover{color:var(--text-secondary);}
   .nav-tab.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue);}
-  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;}
-  .badge.red{background:rgba(248,113,113,0.12);color:#f87171;}
-  .badge.yellow{background:rgba(251,191,36,0.12);color:#fbbf24;}
-  .badge.green{background:rgba(52,211,153,0.12);color:#34d399;}
 
   /* PAGES */
   .page{display:none;flex-direction:column;gap:24px;}
@@ -98,7 +95,27 @@
   .split-chart-label.beta{color:#a78bfa;}
   .split-chart-label.nonbeta{color:#fb923c;}
 
-  @media(max-width:700px){.art-row{grid-template-columns:1fr;}.art-row-2{grid-template-columns:1fr;}.split-chart-grid{grid-template-columns:1fr;}.gap-card{grid-template-columns:1fr;}body{padding:16px;}}
+  /* ticket analysis page */
+  .ticket-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+  .ticket-stat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px 16px;flex:1;min-width:140px;}
+  .ticket-stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;}
+  .ticket-stat-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;}
+  .ticket-stat-detail{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .inner-card{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .inner-card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:12px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+  .bar-label{width:130px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+  .bar-track{flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .bar-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);width:28px;text-align:right;flex-shrink:0;}
+  .findings-list{display:flex;flex-direction:column;gap:10px;}
+  .finding-item{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--text-secondary);line-height:1.7;}
+  .finding-arrow{color:var(--accent-blue);font-weight:600;flex-shrink:0;margin-top:1px;}
+  .finding-item.warn .finding-arrow{color:#f87171;}
+  .finding-item.ok .finding-arrow{color:#34d399;}
+
+  @media(max-width:700px){.art-row{grid-template-columns:1fr;}.art-row-2{grid-template-columns:1fr;}.split-chart-grid{grid-template-columns:1fr;}.gap-card{grid-template-columns:1fr;}.two-col{grid-template-columns:1fr;}body{padding:16px;}}
 </style>
 </head>
 <body>
@@ -111,6 +128,7 @@
       <span class="badge green">119 Weeks of History</span>
       <span class="badge yellow">⚠ Recurring Median Hours Spike Pattern</span>
       <span class="badge yellow">⚠ Apr 5 = Easter — Anomalous Volume</span>
+      <span class="badge muted">Generated Apr 5, 2026</span>
     </div>
   </div>
 
@@ -119,6 +137,7 @@
     <button class="nav-tab active" onclick="showPage('overview')">Overview</button>
     <button class="nav-tab" onclick="showPage('campus')">Campus Breakdown</button>
     <button class="nav-tab" onclick="showPage('upgrade')">Rock Upgrade KPI</button>
+    <button class="nav-tab" onclick="showPage('tickets')">Rock Ticket Analysis</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════
@@ -312,7 +331,7 @@
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">scenarios · pending data</div>
           <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;"><div style="width:0%;height:3px;border-radius:2px;background:var(--text-muted);"></div></div>
           <div style="font-size:11px;color:var(--text-muted);">target: growing per cycle</div>
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6;">Need Data — Unosquare discovery will define test runner and suite structure. More scenarios = more surface area for catching regressions before production.</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6;">Need Data — Unosquare discovery will define test runner and suite structure.</div>
         </div>
 
         <!-- Kickoff lag -->
@@ -358,11 +377,11 @@
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
-          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Is the build time we care about the AppVeyor build of Rock itself, or our total pipeline time including our customizations on top of Rock? These could tell very different stories — the former is partially outside our control, the latter is fully owned by our team.</p>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Is the build time we care about the AppVeyor build of Rock itself, or our total pipeline time including our customizations on top of Rock?</p>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
-          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Where do our automated tests actually run — in GitLab CI, or are they tied to the AppVeyor build? This determines where coverage % and pass rate data lives and how we pull it.</p>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Where do our automated tests actually run — in GitLab CI, or are they tied to the AppVeyor build?</p>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
@@ -370,12 +389,339 @@
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
-          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Version overlap policy: when a new major version releases while the previous version is still receiving point releases (e.g. v17 point releases continuing after v18.1 dropped in Dec 2025), what is the official rule for when the upgrade clock starts? Need a defined policy so kickoff lag is measured consistently going forward.</p>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Version overlap policy: when a new major version releases while the previous version is still receiving point releases, what is the official rule for when the upgrade clock starts?</p>
         </div>
       </div>
     </div>
 
   </div><!-- /page-upgrade -->
+
+  <!-- ══════════════════════════════════════════════════════
+       PAGE 4 — ROCK TICKET ANALYSIS
+  ══════════════════════════════════════════════════════ -->
+  <div id="page-tickets" class="page">
+
+    <!-- Top-line stats -->
+    <div class="card">
+      <div class="section-label">Rock RMS Ticket Analysis — Sep 27, 2025 – Mar 27, 2026 · 1,049 Rock tickets of 9,346 total</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:0;">
+        <div class="art-card"><div class="art-label">Total Rock Tickets</div><div class="art-value flat">1,049</div><div class="art-detail">11.2% of all tickets</div></div>
+        <div class="art-card"><div class="art-label">Avg per Week</div><div class="art-value" style="color:#fbbf24;">38.9</div><div class="art-detail">Up 31/wk → 49/wk</div></div>
+        <div class="art-card"><div class="art-label">Help Desk Resolved</div><div class="art-value up">89.9%</div><div class="art-detail">943 of 1,049 tickets</div></div>
+        <div class="art-card"><div class="art-label">Escalated to Rock Team</div><div class="art-value down">106</div><div class="art-detail">10.1% escalation rate</div></div>
+        <div class="art-card"><div class="art-label">Rock Team Resolution</div><div class="art-value down">30.2h</div><div class="art-detail">Median (vs 0.96h help desk)</div></div>
+        <div class="art-card"><div class="art-label">Rock Team SLA</div><div class="art-value down">60.9%</div><div class="art-detail">36 violations of 92 resolved</div></div>
+        <div class="art-card"><div class="art-label">Current Backlog</div><div class="art-value" style="color:#fbbf24;">20</div><div class="art-detail">In Rock RMS group queue</div></div>
+      </div>
+    </div>
+
+    <!-- Key findings -->
+    <div class="card">
+      <div class="section-label">Key Findings</div>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Escalation rate is climbing sharply.</strong> Went from 4–8% in January to 26–38% in the last 4 weeks. The Rock team is seeing 3–4× more tickets routed to them compared to early in the year.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#34d399;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Help desk resolves ~90% of Rock tickets,</strong> primarily access requests (439 tickets) and general Rock RMS issues (448 tickets), handled by IT Support and IT On-Call groups.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Rock team SLA compliance is at 60.9%,</strong> with 36 violations — significantly below the help desk rate of 97.8%. February was the worst month at 15 violations out of 31 escalations.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Rock team median resolution is 30.2 hours</strong> vs 0.96 hours for the help desk. The nature of the work is different, but the gap is significant.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#4a9eff;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Top escalation reasons:</strong> scheduling issues (14), errors/bugs (13), check-in problems (10), connections/groups (10), and volunteer access edge cases (9).</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">The current backlog includes 2 tickets over 80 days old</strong> and 5 "Awaiting Response" tickets in the Rock RMS queue that may be stale.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Volume is trending up:</strong> Oct–Dec averaged 31 Rock tickets/week; Jan–Mar is running at 49/week (+56%).</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#4a9eff;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Common escalation themes</strong> (scheduling, bugs, check-in, connections) suggest potential for targeted KB articles, runbooks, or Rock platform improvements that could reduce the escalation rate.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">The backlog needs a review pass:</strong> 3 unassigned tickets (including an Urgent), 2 tickets at 80+ days, and several "Awaiting Response" tickets that may be stale.</span></div>
+      </div>
+    </div>
+
+    <!-- Weekly volume + Monthly SLA -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Weekly Rock Ticket Volume</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Week</th><th>Total</th><th>Escalated</th><th>Esc %</th><th>Trend</th></tr></thead>
+            <tbody>
+              <tr><td class="val-mono">Jan 5</td><td class="val-mono">42</td><td class="val-mono">3</td><td class="val-up">7%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 12</td><td class="val-mono">82</td><td class="val-mono">3</td><td class="val-up">4%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 19</td><td class="val-mono">52</td><td class="val-mono">4</td><td class="val-up">8%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 26</td><td class="val-mono">36</td><td class="val-mono">6</td><td class="val-warn">17%</td><td><span class="badge yellow">Rising</span></td></tr>
+              <tr><td class="val-mono">Feb 2</td><td class="val-mono">46</td><td class="val-mono">10</td><td class="val-warn">22%</td><td><span class="badge yellow">Rising</span></td></tr>
+              <tr><td class="val-mono">Feb 9</td><td class="val-mono">51</td><td class="val-mono">3</td><td class="val-up">6%</td><td><span class="badge green">Dip</span></td></tr>
+              <tr><td class="val-mono">Feb 16</td><td class="val-mono">39</td><td class="val-mono">8</td><td class="val-warn">21%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Feb 23</td><td class="val-mono">57</td><td class="val-mono">10</td><td class="val-warn">18%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Mar 2</td><td class="val-mono">55</td><td class="val-mono">20</td><td class="val-down">36%</td><td><span class="badge red">High</span></td></tr>
+              <tr><td class="val-mono">Mar 9</td><td class="val-mono">50</td><td class="val-mono">19</td><td class="val-down">38%</td><td><span class="badge red">High</span></td></tr>
+              <tr><td class="val-mono">Mar 16</td><td class="val-mono">38</td><td class="val-mono">10</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Mar 23</td><td class="val-mono">35</td><td class="val-mono">9</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">Monthly Escalation + SLA Trend</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Month</th><th>Total</th><th>Escalated</th><th>SLA Violations</th><th>SLA %</th></tr></thead>
+            <tbody>
+              <tr><td class="val-mono">Oct 2025</td><td class="val-mono">214</td><td class="val-mono">0</td><td class="val-mono">2</td><td class="val-up">99%</td></tr>
+              <tr><td class="val-mono">Nov 2025</td><td class="val-mono">139</td><td class="val-mono">0</td><td class="val-mono">5</td><td class="val-up">96%</td></tr>
+              <tr><td class="val-mono">Dec 2025</td><td class="val-mono">104</td><td class="val-mono">1</td><td class="val-mono">5</td><td class="val-up">95%</td></tr>
+              <tr><td class="val-mono">Jan 2026</td><td class="val-mono">212</td><td class="val-mono">16</td><td class="val-mono">12</td><td class="val-warn">94%</td></tr>
+              <tr><td class="val-mono">Feb 2026</td><td class="val-mono">193</td><td class="val-mono">31</td><td class="val-mono">21</td><td class="val-down">89%</td></tr>
+              <tr><td class="val-mono">Mar 2026</td><td class="val-mono">178</td><td class="val-mono">58</td><td class="val-mono">12</td><td class="val-warn">93%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Escalations went from near-zero in Oct–Dec to 58 in March. The Rock team queue didn't exist as a routing target until late December — the increase partly reflects the help desk learning when to escalate. SLA violations peaked in February.</div>
+      </div>
+    </div>
+
+    <!-- Help desk vs Rock team -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Help Desk Resolves — 943 tickets (89.9%)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Rock RMS general</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">448</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Access requests</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:98%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">439</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Check-in issues</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:12%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">52</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Cache clears</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:1%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">3</span></div>
+        </div>
+        <div class="note"><strong>Median resolution:</strong> <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">0.96h (58 min)</span> · <strong>SLA:</strong> <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">97.8%</span> (21 violations of 937)<br><strong>Primary agents:</strong> Alicia (174), Brian S. (113), Garrett (103), Beulah (73), Calvin (64)</div>
+      </div>
+      <div class="card">
+        <div class="section-label">Rock Team Escalations — 106 tickets (10.1%)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Scheduling</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:#f87171;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">14</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Errors / bugs</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:93%;height:100%;background:#f87171;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">13</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Check-in issues</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:71%;height:100%;background:#fb923c;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">10</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Connections / groups</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:71%;height:100%;background:#fb923c;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">10</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Volunteer access</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:64%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">9</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Span of care</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:36%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">5</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Onboarding</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:29%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">4</span></div>
+        </div>
+        <div class="note"><strong>Median resolution:</strong> <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">30.2h</span> · <strong>SLA:</strong> <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">60.9%</span> (36 violations of 92)<br><strong>Primary agents:</strong> Gordon Arber (16), Elle Rea (26), Chris Rea (6)</div>
+      </div>
+    </div>
+
+    <!-- Response & resolution times -->
+    <div class="card">
+      <div class="section-label">Response &amp; Resolution Times — Help Desk vs. Rock Team</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Metric</th><th>All Rock</th><th>Help Desk</th><th>Rock Team</th></tr></thead>
+          <tbody>
+            <tr><td class="cat-name">First response (median)</td><td class="val-mono">0.47h (28 min)</td><td class="val-up">0.45h (27 min)</td><td class="val-warn">0.62h (37 min)</td></tr>
+            <tr><td class="cat-name">First response (mean)</td><td class="val-mono">2.65h</td><td class="val-up">1.92h</td><td class="val-down">9.14h</td></tr>
+            <tr><td class="cat-name">Resolution (median)</td><td class="val-mono">1.20h</td><td class="val-up">0.96h (58 min)</td><td class="val-down">30.22h</td></tr>
+            <tr><td class="cat-name">Resolution (mean)</td><td class="val-mono">6.79h</td><td class="val-up">3.79h</td><td class="val-down">37.40h</td></tr>
+            <tr><td class="cat-name">Resolution SLA compliance</td><td class="val-mono">94.5%</td><td class="val-up">97.8%</td><td class="val-down">60.9%</td></tr>
+            <tr><td class="cat-name">First response SLA compliance</td><td class="val-mono">96.5%</td><td class="val-up">97.9%</td><td class="val-down">82.8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Current backlog -->
+    <div class="card">
+      <div class="section-label">Current Backlog — Rock RMS Group (20 tickets)</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Ticket</th><th>Age</th><th>Status</th><th>Priority</th><th>Agent</th><th>Subject</th></tr></thead>
+          <tbody>
+            <tr><td class="val-mono">#9402</td><td><span class="badge red">84d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">Email list for Kelly Kaeser</td></tr>
+            <tr><td class="val-mono">#9466</td><td><span class="badge red">83d</span></td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">RMS Issue in Scheduling</td></tr>
+            <tr><td class="val-mono">#11641</td><td><span class="badge yellow">42d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Partner Summit 2026 landing page</td></tr>
+            <tr><td class="val-mono">#11891</td><td><span class="badge yellow">38d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">BGC Process Notifications</td></tr>
+            <tr><td class="val-mono">#11894</td><td><span class="badge yellow">38d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - Volunteer Addresses</td></tr>
+            <tr><td class="val-mono">#12016</td><td><span class="badge yellow">35d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - BGC Step in Onboarding</td></tr>
+            <tr><td class="val-mono">#12181</td><td><span class="badge yellow">33d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">Setting up Ghaezal Pitt in both instances</td></tr>
+            <tr><td class="val-mono">#12378</td><td><span class="badge yellow">28d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">No Response / Incorrect Service Data</td></tr>
+            <tr><td class="val-mono">#12702</td><td class="val-mono">24d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Unable to Upload LifeGroup Cover Photo</td></tr>
+            <tr><td class="val-mono">#13285</td><td class="val-mono">14d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Add "Short-Term Group End Date" column</td></tr>
+            <tr><td class="val-mono">#13311</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-warn">Medium</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Kelsi Evans Background Check</td></tr>
+            <tr><td class="val-mono">#13313</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Missions Event Attribute</td></tr>
+            <tr><td class="val-mono">#13356</td><td class="val-mono">12d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Error</td></tr>
+            <tr style="background:rgba(248,113,113,0.04);"><td class="val-mono">#13365</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;">⚠ Urgent</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Community Restriction</td></tr>
+            <tr><td class="val-mono">#13389</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td class="val-warn">High</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Rock Email Error</td></tr>
+            <tr><td class="val-mono">#13461</td><td class="val-mono">11d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Missing Volunteer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout" style="margin-top:12px;">
+        <strong>⚠ Notable:</strong> 3 tickets have no agent assigned, including an Urgent (#13365). Two tickets (#9402, #9466) are over 80 days old. 5 Chris Rea tickets are in Awaiting Response status at 28–38 days.
+      </div>
+    </div>
+
+    <div class="note" style="padding:0;">Analysis generated from Freshservice ticket export (9,346 tickets, Sep 27 2025 – Mar 27 2026). Rock tickets identified by Sub-Category = "Rock". Escalations identified by Group = "Rock RMS". Help desk = all other groups (IT Support, IT On-Call, VIP Support).</div>
+
+  </div><!-- /page-tickets -->
+
+  <!-- ══════════════════════════════════════════════════════
+       PAGE 4 — ROCK TICKET ANALYSIS
+  ══════════════════════════════════════════════════════ -->
+  <div id="page-tickets" class="page">
+
+    <div class="card">
+      <div class="section-label">Rock RMS Ticket Analysis</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Sep 27, 2025 – Mar 27, 2026 · 1,049 Rock tickets of 9,346 total · Generated Apr 5, 2026</p>
+
+      <!-- Top-line stats -->
+      <div class="ticket-meta">
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Total Rock Tickets</div>
+          <div class="ticket-stat-value" style="color:var(--text-primary);">1,049</div>
+          <div class="ticket-stat-detail">11.2% of all tickets</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Avg per Week</div>
+          <div class="ticket-stat-value" style="color:#fbbf24;">38.9</div>
+          <div class="ticket-stat-detail">Up from 31/wk → 49/wk</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Help Desk Resolved</div>
+          <div class="ticket-stat-value" style="color:#34d399;">89.9%</div>
+          <div class="ticket-stat-detail">943 of 1,049 tickets</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Escalated to Rock Team</div>
+          <div class="ticket-stat-value" style="color:#f87171;">106</div>
+          <div class="ticket-stat-detail">10.1% escalation rate</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Rock Team Resolution</div>
+          <div class="ticket-stat-value" style="color:#f87171;">30.2h</div>
+          <div class="ticket-stat-detail">Median (vs 0.96h help desk)</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Rock Team SLA</div>
+          <div class="ticket-stat-value" style="color:#f87171;">60.9%</div>
+          <div class="ticket-stat-detail">36 violations of 92 resolved</div>
+        </div>
+        <div class="ticket-stat">
+          <div class="ticket-stat-label">Current Backlog</div>
+          <div class="ticket-stat-value" style="color:#fbbf24;">20</div>
+          <div class="ticket-stat-detail">In Rock RMS group queue</div>
+        </div>
+      </div>
+
+      <!-- Two-column: Resolution split + Escalation reasons -->
+      <div class="two-col" style="margin-bottom:16px;">
+        <div class="inner-card">
+          <div class="inner-card-title">Help Desk Resolves (943 tickets, 89.9%)</div>
+          <div class="bar-row"><span class="bar-label">Rock RMS general</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#4a9eff;"></div></div><span class="bar-val">448</span></div>
+          <div class="bar-row"><span class="bar-label">Access requests</span><div class="bar-track"><div class="bar-fill" style="width:98%;background:#4a9eff;"></div></div><span class="bar-val">439</span></div>
+          <div class="bar-row"><span class="bar-label">Check-in issues</span><div class="bar-track"><div class="bar-fill" style="width:12%;background:#4a9eff;"></div></div><span class="bar-val">52</span></div>
+          <div class="bar-row"><span class="bar-label">Cache clears</span><div class="bar-track"><div class="bar-fill" style="width:1%;background:#4a9eff;"></div></div><span class="bar-val">3</span></div>
+          <div style="margin-top:12px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+            Median resolution: <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">0.96h (58 min)</span><br>
+            SLA compliance: <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">97.8%</span> (21 violations of 937)<br>
+            Primary agents: Alicia (174), Brian S. (113), Garrett (103)
+          </div>
+        </div>
+        <div class="inner-card">
+          <div class="inner-card-title">Rock Team Escalations (106 tickets, 10.1%)</div>
+          <div class="bar-row"><span class="bar-label">Scheduling</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#f87171;"></div></div><span class="bar-val">14</span></div>
+          <div class="bar-row"><span class="bar-label">Errors / bugs</span><div class="bar-track"><div class="bar-fill" style="width:93%;background:#f87171;"></div></div><span class="bar-val">13</span></div>
+          <div class="bar-row"><span class="bar-label">Check-in issues</span><div class="bar-track"><div class="bar-fill" style="width:71%;background:#f87171;"></div></div><span class="bar-val">10</span></div>
+          <div class="bar-row"><span class="bar-label">Connections / groups</span><div class="bar-track"><div class="bar-fill" style="width:71%;background:#f87171;"></div></div><span class="bar-val">10</span></div>
+          <div class="bar-row"><span class="bar-label">Volunteer access</span><div class="bar-track"><div class="bar-fill" style="width:64%;background:#f87171;"></div></div><span class="bar-val">9</span></div>
+          <div class="bar-row"><span class="bar-label">Span of care</span><div class="bar-track"><div class="bar-fill" style="width:36%;background:#f87171;"></div></div><span class="bar-val">5</span></div>
+          <div style="margin-top:12px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+            Median resolution: <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">30.2h</span><br>
+            SLA compliance: <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">60.9%</span> (36 violations of 92)<br>
+            Primary agents: Gordon Arber (16), Elle Rea (26), Chris Rea (6)
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly escalation trend table -->
+      <div class="two-col" style="margin-bottom:16px;">
+        <div class="inner-card">
+          <div class="inner-card-title">Weekly Volume &amp; Escalation Trend</div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Week</th><th>Total</th><th>Escalated</th><th>Esc %</th><th>Trend</th></tr></thead>
+              <tbody>
+                <tr><td class="val-mono">Jan 5</td><td class="val-mono">42</td><td class="val-mono">3</td><td class="val-up">7%</td><td><span class="badge green">Low</span></td></tr>
+                <tr><td class="val-mono">Jan 12</td><td class="val-mono">82</td><td class="val-mono">3</td><td class="val-up">4%</td><td><span class="badge green">Low</span></td></tr>
+                <tr><td class="val-mono">Jan 19</td><td class="val-mono">52</td><td class="val-mono">4</td><td class="val-up">8%</td><td><span class="badge green">Low</span></td></tr>
+                <tr><td class="val-mono">Jan 26</td><td class="val-mono">36</td><td class="val-mono">6</td><td class="val-warn">17%</td><td><span class="badge yellow">Rising</span></td></tr>
+                <tr><td class="val-mono">Feb 2</td><td class="val-mono">46</td><td class="val-mono">10</td><td class="val-warn">22%</td><td><span class="badge yellow">Rising</span></td></tr>
+                <tr><td class="val-mono">Feb 9</td><td class="val-mono">51</td><td class="val-mono">3</td><td class="val-up">6%</td><td><span class="badge green">Dip</span></td></tr>
+                <tr><td class="val-mono">Feb 16</td><td class="val-mono">39</td><td class="val-mono">8</td><td class="val-warn">21%</td><td><span class="badge yellow">Elevated</span></td></tr>
+                <tr><td class="val-mono">Feb 23</td><td class="val-mono">57</td><td class="val-mono">10</td><td class="val-warn">18%</td><td><span class="badge yellow">Elevated</span></td></tr>
+                <tr><td class="val-mono">Mar 2</td><td class="val-mono">55</td><td class="val-mono">20</td><td class="val-down">36%</td><td><span class="badge red">High</span></td></tr>
+                <tr><td class="val-mono">Mar 9</td><td class="val-mono">50</td><td class="val-mono">19</td><td class="val-down">38%</td><td><span class="badge red">High</span></td></tr>
+                <tr><td class="val-mono">Mar 16</td><td class="val-mono">38</td><td class="val-mono">10</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+                <tr><td class="val-mono">Mar 23</td><td class="val-mono">35</td><td class="val-mono">9</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="inner-card">
+          <div class="inner-card-title">Monthly Escalation &amp; SLA Trend</div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Month</th><th>Total</th><th>Escalated</th><th>SLA Violations</th><th>SLA %</th></tr></thead>
+              <tbody>
+                <tr><td class="val-mono">Oct 2025</td><td class="val-mono">214</td><td class="val-mono">0</td><td class="val-mono">2</td><td class="val-up">99%</td></tr>
+                <tr><td class="val-mono">Nov 2025</td><td class="val-mono">139</td><td class="val-mono">0</td><td class="val-mono">5</td><td class="val-up">96%</td></tr>
+                <tr><td class="val-mono">Dec 2025</td><td class="val-mono">104</td><td class="val-mono">1</td><td class="val-mono">5</td><td class="val-up">95%</td></tr>
+                <tr><td class="val-mono">Jan 2026</td><td class="val-mono">212</td><td class="val-mono">16</td><td class="val-mono">12</td><td class="val-warn">94%</td></tr>
+                <tr><td class="val-mono">Feb 2026</td><td class="val-mono">193</td><td class="val-mono">31</td><td class="val-mono">21</td><td class="val-down">89%</td></tr>
+                <tr><td class="val-mono">Mar 2026</td><td class="val-mono">178</td><td class="val-mono">58</td><td class="val-mono">12</td><td class="val-warn">93%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-muted);line-height:1.6;">Escalations went from near-zero in Oct–Dec to 58 in March. The Rock team queue didn't exist as a routing target until late December — the increase partly reflects the help desk learning when to escalate. SLA violations peaked in February.</div>
+        </div>
+      </div>
+
+      <!-- Current backlog -->
+      <div class="inner-card" style="margin-bottom:16px;">
+        <div class="inner-card-title">Current Backlog — Rock RMS Group Queue (20 tickets)</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Ticket</th><th>Age</th><th>Status</th><th>Priority</th><th>Agent</th><th>Subject</th></tr></thead>
+            <tbody>
+              <tr><td class="val-mono">#9402</td><td><span class="badge red">84d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">Email list for Kelly Kaeser</td></tr>
+              <tr><td class="val-mono">#9466</td><td><span class="badge red">83d</span></td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">RMS Issue in Scheduling</td></tr>
+              <tr><td class="val-mono">#11641</td><td><span class="badge yellow">42d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Partner Summit 2026 landing page</td></tr>
+              <tr><td class="val-mono">#11891</td><td><span class="badge yellow">38d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">BGC Process Notifications</td></tr>
+              <tr><td class="val-mono">#11894</td><td><span class="badge yellow">38d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - Volunteer Addresses</td></tr>
+              <tr><td class="val-mono">#12016</td><td><span class="badge yellow">35d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - BGC Step in Onboarding</td></tr>
+              <tr><td class="val-mono">#12181</td><td><span class="badge yellow">33d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">Setting up Ghaezal Pitt in both instances</td></tr>
+              <tr><td class="val-mono">#12378</td><td><span class="badge yellow">28d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">No Response / Incorrect Service Data</td></tr>
+              <tr><td class="val-mono">#12702</td><td class="val-mono">24d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Unable to Upload LifeGroup Cover Photo</td></tr>
+              <tr><td class="val-mono">#13285</td><td class="val-mono">14d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Add "Short-Term Group End Date" column</td></tr>
+              <tr><td class="val-mono">#13311</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-warn">Medium</td><td style="color:#f87171;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Kelsi Evans Background Check</td></tr>
+              <tr><td class="val-mono">#13313</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Missions Event Attribute</td></tr>
+              <tr><td class="val-mono">#13356</td><td class="val-mono">12d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Error</td></tr>
+              <tr><td class="val-mono">#13365</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">⚠ Urgent</td><td style="color:#f87171;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Community Restriction</td></tr>
+              <tr><td class="val-mono">#13389</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td class="val-warn">High</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Rock Email Error</td></tr>
+              <tr><td class="val-mono">#13461</td><td class="val-mono">11d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Missing Volunteer</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout" style="margin-top:12px;">
+          <strong>⚠ Notable:</strong> 3 tickets have no agent assigned including an Urgent (#13365). Two tickets (#9402, #9466) are over 80 days old. 5 Chris Rea tickets are in Awaiting Response status at 28–38 days.
+        </div>
+      </div>
+
+      <!-- Key findings -->
+      <div class="inner-card">
+        <div class="inner-card-title">Key Findings</div>
+        <div class="findings-list">
+          <div class="finding-item warn"><span class="finding-arrow">→</span><span><strong style="color:var(--text-primary);">Escalation rate is climbing sharply.</strong> Went from 4–8% in January to 26–38% in the last 4 weeks. The Rock team is seeing 3–4× more tickets routed to them compared to early in the year.</span></div>
+          <div class="finding-item ok"><span class="finding-arrow" style="color:#34d399;">→</span><span><strong style="color:var(--text-primary);">Help desk handles the bulk effectively.</strong> 90% of Rock tickets are resolved by IT Support/On-Call at a 58-minute median and 97.8% SLA — primarily access grants and common troubleshooting.</span></div>
+          <div class="finding-item warn"><span class="finding-arrow">→</span><span><strong style="color:var(--text-primary);">Rock team SLA needs attention.</strong> 30.2h median resolution and 60.9% SLA compliance. The Rock team is likely capacity-constrained or these tickets involve development work that doesn't fit the standard SLA targets. February was the worst month at 15 violations out of 31 escalations.</span></div>
+          <div class="finding-item warn"><span class="finding-arrow">→</span><span><strong style="color:var(--text-primary);">Volume is trending up.</strong> Oct–Dec averaged 31 Rock tickets/week, Jan–Mar is running at 49/week (+56%). Total demand on Rock-related support is growing.</span></div>
+          <div class="finding-item"><span class="finding-arrow" style="color:var(--accent-blue);">→</span><span><strong style="color:var(--text-primary);">Top escalation themes</strong> (scheduling, bugs, check-in, connections) suggest potential for targeted KB articles, runbooks, or Rock platform improvements to reduce escalation rate.</span></div>
+          <div class="finding-item warn"><span class="finding-arrow">→</span><span><strong style="color:var(--text-primary);">Backlog needs a review pass.</strong> 3 unassigned tickets (including an Urgent), 2 tickets at 80+ days, and several "Awaiting Response" tickets that may be stale.</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /page-tickets -->
 
 </div><!-- /dashboard -->
 
@@ -386,7 +732,6 @@ function showPage(name) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.querySelector(`.nav-tab[onclick="showPage('${name}')"]`).classList.add('active');
-  if (name === 'campus') setTimeout(drawCampusCharts, 50);
 }
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
@@ -394,8 +739,6 @@ const SPIKE = 1000;
 const allDatesSet = new Set();
 const compAll={}, medAll={}, staffTotal={}, staffBeta={}, staffNonBeta={};
 const compByType={}, medByType={};
-
-
 
 function ingest(rows) {
   rows.forEach(([date, metric, grp, val]) => {
@@ -528,8 +871,6 @@ function renderART(id, data, suffix, isMedian=false) {
       <div class="art-detail">Last 4 non-spike weeks</div></div>`;
 }
 
-
-
 function drawChart(canvasId, rawData, labels, artId, suffix, isMedian=false) {
   const canvas=document.getElementById(canvasId);
   if(!canvas) return;
@@ -634,8 +975,6 @@ function drawChart(canvasId, rawData, labels, artId, suffix, isMedian=false) {
     ctx.fillText(suffix==='%'?v.toFixed(1)+'%':v.toFixed(0)+(suffix==='hrs'?'h':''),x,y-12);
   }
 }
-
-
 
 function makeSpark(values, isMedian=false) {
   const clean=values.filter(v=>v!==null&&(!isMedian||v<SPIKE));
@@ -768,8 +1107,6 @@ function buildStaffTable() {
   });
 }
 
-
-
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const fullLabels=makeLabels(allDates);
 const compSeries=getSeries(compAll,allDates);
@@ -780,7 +1117,6 @@ buildCompTable();
 buildMedianTable();
 buildStaffTable();
 
-
 drawChart('chart-completion',compSeries,fullLabels,'art-completion','%',false);
 drawChart('chart-median',medSeries,fullLabels,'art-median','hrs',true);
 drawChart('chart-staff',staffSeries,fullLabels,'art-staff','%',false);
@@ -789,7 +1125,6 @@ window.addEventListener('resize',()=>{
   drawChart('chart-completion',compSeries,fullLabels,null,'%',false);
   drawChart('chart-median',medSeries,fullLabels,null,'hrs',true);
   drawChart('chart-staff',staffSeries,fullLabels,null,'%',false);
-
 });
 </script>
 </body>
