@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Product KPI Dashboard — YTD 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#0f1117;--surface:#181b23;--border:#2a2e3a;
+    --text-primary:#e8eaed;--text-secondary:#9ba1b0;--text-muted:#636978;
+    --accent-blue:#4a9eff;--accent-green:#34d399;--accent-red:#f87171;--accent-yellow:#fbbf24;
+    --dot-normal:rgba(99,105,120,0.5);--dot-outlier:#f87171;
+    --band-fill:rgba(74,158,255,0.11);--band-stroke:rgba(74,158,255,0.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;padding:32px;}
+  .dashboard{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+  .dash-header{margin-bottom:8px;}
+  .dash-header h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
+  .dash-header p{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .badge-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;}
+  .badge.red{background:rgba(248,113,113,0.12);color:#f87171;}
+  .badge.yellow{background:rgba(251,191,36,0.12);color:#fbbf24;}
+  .badge.green{background:rgba(52,211,153,0.12);color:#34d399;}
+  .badge.blue{background:rgba(74,158,255,0.12);color:#4a9eff;}
+  .badge.muted{background:rgba(99,105,120,0.12);color:#9ba1b0;}
+
+  .nav-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .nav-tab{padding:8px 18px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
+  .nav-tab:hover{color:var(--text-secondary);}
+  .nav-tab.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue);}
+
+  .page{display:none;flex-direction:column;gap:24px;}
+  .page.active{display:flex;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 28px;}
+  .section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:12px;}
+  .chart-title{font-size:15px;font-weight:600;letter-spacing:-.2px;}
+  .chart-subtitle{font-size:12px;color:var(--text-muted);margin-top:3px;}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--text-muted);flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .l-dot{width:7px;height:7px;border-radius:50%;}
+  .l-dot.normal{background:var(--dot-normal);}.l-dot.outlier{background:var(--dot-outlier);}
+  .l-line{width:18px;height:2.5px;border-radius:2px;}.l-line.avg{background:var(--accent-blue);}
+  .l-line.beta{background:#a78bfa;}.l-line.nonbeta{background:#fb923c;}
+  .l-band{width:18px;height:10px;border-radius:2px;background:rgba(74,158,255,0.11);border:1px solid rgba(74,158,255,0.35);}
+  .l-dot.spike{background:#fbbf24;}
+  .art-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 20px;}
+  .art-row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0 20px;}
+  .art-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+  .art-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;}
+  .art-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;letter-spacing:-.5px;}
+  .art-detail{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .art-value.up{color:#34d399;}.art-value.down{color:#f87171;}.art-value.flat{color:var(--text-secondary);}
+  .art-value.beta-color{color:#a78bfa;}.art-value.nonbeta-color{color:#fb923c;}
+  canvas{width:100%;}
+  .divider{height:1px;background:var(--border);margin:20px 0;}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;padding:8px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+  td{padding:9px 12px;border-bottom:1px solid rgba(42,46,58,.5);white-space:nowrap;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,.02);}
+  .cat-name{font-weight:500;color:var(--text-primary);}
+  .val-up{color:#34d399;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .val-down{color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .val-flat{color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .val-warn{color:#fbbf24;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .val-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);}
+  .val-beta{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a78bfa;}
+  .val-nonbeta{font-family:'JetBrains Mono',monospace;font-size:11px;color:#fb923c;}
+  .star{color:#fbbf24;}
+  .callout{margin-top:16px;padding:12px 14px;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.12);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.6;}
+  .callout strong{color:var(--dot-outlier);font-weight:600;}
+  .callout.yellow{background:rgba(251,191,36,.05);border-color:rgba(251,191,36,.12);}
+  .callout.yellow strong{color:#fbbf24;}
+  .callout.blue{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.12);}
+  .callout.blue strong{color:#4a9eff;}
+  .note{margin-top:14px;font-size:11px;color:var(--text-muted);line-height:1.6;padding-top:12px;border-top:1px solid var(--border);}
+  .note strong{color:var(--text-secondary);font-weight:500;}
+  .spark{display:inline-block;vertical-align:middle;}
+  .gap-card{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .color-swatch{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px;}
+  .split-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 20px;}
+  .split-chart-box{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .split-chart-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+  .split-chart-label.beta{color:#a78bfa;}
+  .split-chart-label.nonbeta{color:#fb923c;}
+  .ticket-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+  .ticket-stat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px 16px;flex:1;min-width:140px;}
+  .ticket-stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;}
+  .ticket-stat-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;}
+  .ticket-stat-detail{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .inner-card{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .inner-card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:12px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+  .bar-label{width:130px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+  .bar-track{flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .bar-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);width:28px;text-align:right;flex-shrink:0;}
+  .findings-list{display:flex;flex-direction:column;gap:10px;}
+  .finding-item{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--text-secondary);line-height:1.7;}
+  .finding-arrow{color:var(--accent-blue);font-weight:600;flex-shrink:0;margin-top:1px;}
+  .finding-item.warn .finding-arrow{color:#f87171;}
+  .finding-item.ok .finding-arrow{color:#34d399;}
+
+  @media(max-width:700px){.art-row{grid-template-columns:1fr;}.art-row-2{grid-template-columns:1fr;}.split-chart-grid{grid-template-columns:1fr;}.gap-card{grid-template-columns:1fr;}.two-col{grid-template-columns:1fr;}body{padding:16px;}}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="dash-header">
+    <h1>Digital Product KPI Dashboard</h1>
+    <p>Life.Church — YTD 2026 (Week of Apr 19) — Ministry Solutions — Live BigQuery · Dec 2023–Apr 2026</p>
+    <div class="badge-row">
+      <span class="badge green">121 Weeks of History</span>
+      <span class="badge yellow">⚠ Recurring Median Hours Spike Pattern</span>
+      <span class="badge yellow">⚠ Apr 19 = Easter Weekend — Low Completion Expected</span>
+      <span class="badge muted">Data refreshed Apr 20, 2026</span>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('exec')">Executive Summary</button>
+    <button class="nav-tab" onclick="showPage('overview')">KPI Charts</button>
+    <button class="nav-tab" onclick="showPage('campus')">Campus Breakdown</button>
+    <button class="nav-tab" onclick="showPage('upgrade')">Rock Upgrade KPI</button>
+    <button class="nav-tab" onclick="showPage('tickets')">Rock Ticket Analysis</button>
+  </div>
+
+  <!-- PAGE 0 — EXECUTIVE SUMMARY -->
+  <div id="page-exec" class="page active">
+
+    <!-- Easter context banner -->
+    <div style="padding:10px 16px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:8px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+      <span style="color:#fbbf24;font-size:14px;">⚠</span>
+      <span><strong style="color:#fbbf24;">Apr 19 = Easter Weekend.</strong> All three KPIs show expected holiday dips. The cleaner read of current performance is <strong style="color:var(--text-secondary);">Apr 12</strong>, shown as "Prior Week" below.</span>
+    </div>
+
+    <!-- KPI 1 -->
+    <div class="card">
+      <div class="section-label">KPI 1 — % of Follow-Ups Completed in 24 Hours</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div class="art-card">
+          <div class="art-label">Easter Week (Apr 19)</div>
+          <div class="art-value flat">23.2%</div>
+          <div class="art-detail">All Connections · holiday dip</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">Prior Week (Apr 12)</div>
+          <div class="art-value flat">27.7%</div>
+          <div class="art-detail">All Connections · cleaner read</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">4-Wk Avg</div>
+          <div id="exec-comp-4wk" class="art-value flat">—</div>
+          <div class="art-detail">excl. Easter week</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">YTD Avg</div>
+          <div id="exec-comp-ytd" class="art-value flat">—</div>
+          <div class="art-detail">Jan – Apr 2026</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#34d399;font-weight:600;flex-shrink:0;">↗</span>
+          <span><strong style="color:var(--text-primary);">Strong long-term improvement.</strong> All Connections climbed from ~15% in early 2024 to a 2026 YTD average around 33%, nearly doubling over two years.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#34d399;font-weight:600;flex-shrink:0;">★</span>
+          <span><strong style="color:var(--text-primary);">LifeGroup Interest remains the benchmark</strong> at ~60% YTD — more than double other connection types — driven by direct SMS to LifeGroup leaders plus community pastor escalation rules.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span>
+          <span><strong style="color:var(--text-primary);">New Families and Prayer Requests lag.</strong> Both are consistently below 20% and have not shown the same upward trend as All Connections overall.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 2 -->
+    <div class="card">
+      <div class="section-label">KPI 2 — Median Hours to First Follow-Up in Rock</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div class="art-card">
+          <div class="art-label">Easter Week (Apr 19)</div>
+          <div class="art-value up">19 hrs</div>
+          <div class="art-detail">All Connections · strong</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">Prior Week (Apr 12)</div>
+          <div class="art-value up">46 hrs</div>
+          <div class="art-detail">All Connections · within band</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">4-Wk Avg*</div>
+          <div id="exec-med-4wk" class="art-value flat">—</div>
+          <div class="art-detail">*excl. spike weeks</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">LifeGroup Median</div>
+          <div class="art-value up">~13 hrs</div>
+          <div class="art-detail">YTD avg · benchmark</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#34d399;font-weight:600;flex-shrink:0;">↘</span>
+          <span><strong style="color:var(--text-primary);">Recent trend is improving.</strong> After a Mar 15 spike week (3,749 hrs flagged as data quality), April has returned to normal range with All Connections at 19–46 hrs.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#f87171;font-weight:600;flex-shrink:0;">⚠</span>
+          <span><strong style="color:var(--text-primary);">Systemic spike pattern persists.</strong> Large spikes (1,000–8,000+ hrs) recur throughout the full history across all categories. These are flagged in the KPI Charts tab and excluded from averages. Under investigation as a Rock batch-close or timestamp issue.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#fbbf24;font-weight:600;flex-shrink:0;">⚠</span>
+          <span><strong style="color:var(--text-primary);">Commit to Christ and Baptism remain erratic.</strong> Response times swing from under 100 hrs to thousands of hours week over week — likely a data integrity issue specific to those connection types.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 3 -->
+    <div class="card">
+      <div class="section-label">KPI 3 — % Staff Stewarding Next Steps in Rock</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div class="art-card">
+          <div class="art-label">Easter Week (Apr 19)</div>
+          <div class="art-value down">22.0%</div>
+          <div class="art-detail">Total · holiday dip</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">Prior Week (Apr 12)</div>
+          <div class="art-value flat">57.0%</div>
+          <div class="art-detail">Total · cleaner read</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">Beta Follow-Up (Apr 12)</div>
+          <div class="art-value" style="color:#a78bfa;">73.0%</div>
+          <div class="art-detail">vs 58% Non-Beta</div>
+        </div>
+        <div class="art-card">
+          <div class="art-label">YTD Avg</div>
+          <div id="exec-staff-ytd" class="art-value flat">—</div>
+          <div class="art-detail">Total · Jan – Apr 2026</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span>
+          <span><strong style="color:var(--text-primary);">2026 has stabilized after a mid-2025 decline.</strong> After dropping to ~39–47% in summer 2025, Total has held in the 50–61% range through Q1 2026. Not yet back to 2024 highs of 60–72%.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#a78bfa;font-weight:600;flex-shrink:0;">↗</span>
+          <span><strong style="color:var(--text-primary);">Beta Follow-Up campuses consistently lead.</strong> Beta has outperformed Non-Beta in every recent week, averaging ~10–15 percentage points higher through 2026.</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <span style="color:#f87171;font-weight:600;flex-shrink:0;">↘</span>
+          <span><strong style="color:var(--text-primary);">Two notable dips in 2026:</strong> Jan 25 (28% — snow weekend) and Apr 19 (22% — Easter). Both are event-driven and consistent with prior-year patterns, not trend regressions.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notable flags -->
+    <div class="card" style="border-color:rgba(251,191,36,0.2);background:rgba(251,191,36,0.03);">
+      <div class="section-label" style="color:#fbbf24;border-bottom-color:rgba(251,191,36,0.15);">Notable Flags</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(248,113,113,0.2);border:1.5px solid #f87171;flex-shrink:0;margin-top:5px;"></div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;"><strong style="color:var(--text-primary);">Rock Upgrade v18.1 is 133 days in</strong> against a 30-day target. Clock started Dec 8, 2025. Not yet deployed. Kickoff lag alone was 56 days. Unosquare discovery engagement for automated testing is upcoming.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(248,113,113,0.2);border:1.5px solid #f87171;flex-shrink:0;margin-top:5px;"></div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;"><strong style="color:var(--text-primary);">Rock ticket escalation rate is elevated</strong> at 26–38% in recent weeks, up from 4–8% in January. Rock team SLA compliance is 60.9%. Volume is trending up 56% (31→49 tickets/week). See Rock Ticket Analysis tab.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;"><strong style="color:var(--text-primary);">Category-level KPI diagnosis is still limited</strong> — all connection type breakdowns are organization-level only. Campus-level data (Beta vs Non-Beta per type) awaits a Data Engineering project currently at Priority 2.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;"><strong style="color:var(--text-primary);">Rock v19 clock has not started</strong> — still in alpha as of last check. No clean release tag yet.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-exec -->
+
+  <!-- PAGE 1 — KPI CHARTS (formerly Overview) -->
+  <div id="page-overview" class="page">
+
+    <div class="card">
+      <div class="section-label">Ministry Solutions — KPI 1</div>
+      <div class="header-row">
+        <div>
+          <div class="chart-title">% of Follow-Ups Completed in 24 Hours</div>
+          <div class="chart-subtitle">All Connections · Weekly · 4-wk avg · 1.5 SD band · Dec 2023–Apr 2026 (121 weeks)</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="l-dot normal"></div>Weekly</div>
+          <div class="legend-item"><div class="l-dot outlier"></div>Outside band</div>
+          <div class="legend-item"><div class="l-line avg"></div>4-wk avg</div>
+          <div class="legend-item"><div class="l-band"></div>1.5 SD band</div>
+        </div>
+      </div>
+      <div id="art-completion" class="art-row"></div>
+      <canvas id="chart-completion"></canvas>
+      <div class="divider"></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Connection Type</th><th>Apr 19</th><th>4-Wk Avg</th><th>8-Wk Avg</th><th>YTD Avg</th><th>Trend</th><th>YTD Sparkline</th>
+          </tr></thead>
+          <tbody id="completion-tbody"></tbody>
+        </table>
+      </div>
+      <div class="callout yellow">
+        <strong>Positive long-term trend:</strong> All Connections climbed from ~15% in early 2024 to ~33–40% through 2025–2026. <strong>Apr 19 (Easter weekend)</strong> dipped to 23% — consistent with last year's Easter pattern and expected, not a regression.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Ministry Solutions — KPI 2</div>
+      <div class="header-row">
+        <div>
+          <div class="chart-title">Median Hours to Follow-Up in Rock</div>
+          <div class="chart-subtitle">All Connections · Weekly · 4-wk avg · 1.5 SD band · Spikes >1,000 hrs excluded from band/avg · Dec 2023–Apr 2026 (121 weeks)</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="l-dot normal"></div>Weekly</div>
+          <div class="legend-item"><div class="l-dot outlier"></div>Outside band</div>
+          <div class="legend-item"><div class="l-dot spike"></div>Data spike</div>
+          <div class="legend-item"><div class="l-line avg"></div>4-wk avg</div>
+          <div class="legend-item"><div class="l-band"></div>1.5 SD band</div>
+        </div>
+      </div>
+      <div id="art-median" class="art-row"></div>
+      <canvas id="chart-median"></canvas>
+      <div class="divider"></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Connection Type</th><th>Apr 19</th><th>4-Wk Avg*</th><th>8-Wk Avg*</th><th>YTD Avg*</th><th>Status</th><th>YTD Sparkline</th>
+          </tr></thead>
+          <tbody id="median-tbody"></tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>⚠ Recurring spike pattern across full history.</strong> Large spikes (1,000–8,000+ hrs) appear repeatedly throughout 2024 and 2025 across all categories — not isolated to Mar 2026. Likely a systemic batch-close or timestamp issue in Rock. <strong>Averages marked * exclude weeks with spikes above 1,000 hrs.</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Ministry Solutions — KPI 3</div>
+      <div class="header-row">
+        <div>
+          <div class="chart-title">% Staff Stewarding Next Steps in Rock</div>
+          <div class="chart-subtitle">Total · Weekly · 4-wk avg · 1.5 SD band · Jan 2024–Apr 2026 (121 weeks)</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="l-dot normal"></div>Weekly</div>
+          <div class="legend-item"><div class="l-dot outlier"></div>Outside band</div>
+          <div class="legend-item"><div class="l-line avg"></div>4-wk avg</div>
+          <div class="legend-item"><div class="l-band"></div>1.5 SD band</div>
+        </div>
+      </div>
+      <div id="art-staff" class="art-row"></div>
+      <canvas id="chart-staff"></canvas>
+      <div class="divider"></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Grouping</th><th>Apr 19</th><th>4-Wk Avg</th><th>8-Wk Avg</th><th>YTD Avg</th><th>Trend</th><th>YTD Sparkline</th>
+          </tr></thead>
+          <tbody id="staff-tbody"></tbody>
+        </table>
+      </div>
+      <div class="note">
+        <strong>Trend:</strong> Staff activity was consistently high (~60–72%) through early 2024, declined gradually to ~43–52% through mid-2025, and has stabilized at ~50–61% in 2026. Beta Follow-Up staff consistently outperform Total and Non-Beta. Low dips on Jan 25 and Apr 19 are snow weekend and Easter respectively.
+      </div>
+    </div>
+
+  </div><!-- /page-overview -->
+
+  <!-- PAGE 2 — CAMPUS BREAKDOWN -->
+  <div id="page-campus" class="page">
+    <div class="card">
+      <div class="section-label">Campus Breakdown — Follow-Up Metrics by Campus Type</div>
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-bottom:16px;">
+        Beta Follow-Up campuses are using a specific follow-up workflow in Rock that other campuses are not yet on. All campuses can follow up with people inside Rock using existing workflows, so the Beta workflow alone would not necessarily be expected to improve completion rate or response time broadly.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:12px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong style="color:var(--text-primary);font-weight:500;">New Family Registration</strong> — The connection type most likely to be impacted by the Beta workflow, since new families feed directly into the multi-step follow-up flow. This is the metric to watch for a meaningful difference between Beta and Non-Beta campuses.
+        </div>
+        <div style="padding:12px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong style="color:var(--text-primary);font-weight:500;">LifeGroup Interest</strong> — Higher completion rates (~60% YTD) are driven by SMS notifications sent directly to the LifeGroup leader, plus an escalation rule that routes to the community pastor if unhandled. Multiple accountable people receiving direct notifications is what's moving this metric, not the Beta workflow.
+        </div>
+        <div style="padding:12px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong style="color:var(--text-primary);font-weight:500;">Baptism</strong> — Received a workflow refresh last year. Any improvement in this connection type should be read in that context rather than attributed to the Beta Follow-Up workflow.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">KPI 1 — % Follow-Ups Completed in 24 Hours · Beta vs Non-Beta</div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:12px;border:1.5px dashed var(--border);border-radius:8px;background:rgba(255,255,255,0.01);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;">Need Data</div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:420px;line-height:1.7;">Campus-level completion rate data is not available in the current dataset. Requires a BigQuery query joining follow-up completions to campus identifiers with a Beta Follow-Up flag.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">KPI 2 — Median Hours to Follow-Up · Beta vs Non-Beta</div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:12px;border:1.5px dashed var(--border);border-radius:8px;background:rgba(255,255,255,0.01);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;">Need Data</div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:420px;line-height:1.7;">Campus-level median response time data is not available in the current dataset. Requires the same campus/workflow mapping as KPI 1.</div>
+      </div>
+    </div>
+  </div><!-- /page-campus -->
+
+  <!-- PAGE 3 — ROCK UPGRADE KPI -->
+  <div id="page-upgrade" class="page">
+    <div class="card">
+      <div class="section-label">Engineering — Outcome KPI</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div class="chart-title">Rock version upgrade cycle time</div>
+          <div class="chart-subtitle" style="margin-top:4px;">Days from first clean GitHub release tag (no suffix) to production deployment</div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8;">
+                          <div><span style="color:var(--text-secondary);font-weight:500;">Current:</span> Rock v18.1 — first clean tag Dec 8, 2025 · 133 days and counting · not yet deployed</div>
+            <div><span style="color:var(--text-secondary);font-weight:500;">Next:</span> Rock v19 — no clean tag yet (19.0.8-alpha as of Apr 6) · clock not started</div>
+          </div>
+          <a href="https://github.com/SparkDevNetwork/Rock/tags" target="_blank" style="display:inline-block;margin-top:8px;font-size:11px;color:var(--accent-blue);text-decoration:none;">Source: github.com/SparkDevNetwork/Rock/tags ↗</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.15);border-radius:10px;padding:14px 20px;flex-shrink:0;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:500;color:#f87171;">133</span>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font-size:12px;color:#f87171;">days · v18 in progress</span>
+            <span style="font-size:12px;color:var(--text-muted);">target ≤ 30 days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Lead Measures</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;">Build time</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:var(--text-muted);">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">minutes · pending data</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;"></div>
+          <div style="font-size:11px;color:var(--text-muted);">target ≤ 30 min</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6;">Need Data — AppVeyor or GitLab CI pipeline duration not yet connected.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;">Regression test suite size</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:var(--text-muted);">—</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">scenarios · pending data</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;"></div>
+          <div style="font-size:11px;color:var(--text-muted);">target: growing per cycle</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6;">Need Data — Unosquare discovery will define test runner and suite structure.</div>
+        </div>
+        <div style="background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.15);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;">Upgrade kickoff lag</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:#f87171;">56</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">days · v18 (Dec 8 → Feb 2)</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;"><div style="width:100%;height:3px;border-radius:2px;background:#f87171;"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);">target ≤ 3 days</div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(248,113,113,0.15);font-size:11px;color:var(--text-muted);line-height:1.6;">Delayed start — v17 point releases still active at time of v18 release.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Upgrade History</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Version</th><th>Release date</th><th>Kickoff date</th><th>Kickoff lag</th><th>Deployed date</th><th>Cycle time</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:500;color:var(--text-primary);">v18.1</td>
+              <td class="val-mono">Dec 8, 2025</td><td class="val-mono">Feb 2, 2026</td>
+              <td><span class="badge red">56 days</span></td>
+              <td class="val-mono">—</td>
+              <td><span class="badge red">133+ days</span></td>
+              <td><span class="badge yellow">In progress</span></td>
+              <td style="font-size:11px;color:var(--text-muted);max-width:200px;">Delayed start — v17 point releases still active at time of v18 release</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(251,191,36,0.2);background:rgba(251,191,36,0.03);">
+      <div class="section-label" style="color:#fbbf24;border-bottom-color:rgba(251,191,36,0.15);">Open Questions</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div><p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Is the build time we care about the AppVeyor build of Rock itself, or our total pipeline time including our customizations on top of Rock?</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div><p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Where do our automated tests actually run — in GitLab CI, or are they tied to the AppVeyor build?</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div><p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Do we have access to AppVeyor build history and API to pull build duration data programmatically, or will this need to be logged manually per upgrade?</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(251,191,36,0.2);border:1.5px solid #fbbf24;flex-shrink:0;margin-top:5px;"></div><p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Version overlap policy: when a new major version releases while the previous version is still receiving point releases, what is the official rule for when the upgrade clock starts?</p></div>
+      </div>
+    </div>
+  </div><!-- /page-upgrade -->
+
+  <!-- PAGE 4 — ROCK TICKET ANALYSIS -->
+  <div id="page-tickets" class="page">
+    <div class="card">
+      <div class="section-label">Rock RMS Ticket Analysis — Sep 27, 2025 – Mar 27, 2026 · 1,049 Rock tickets of 9,346 total</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:0;">
+        <div class="art-card"><div class="art-label">Total Rock Tickets</div><div class="art-value flat">1,049</div><div class="art-detail">11.2% of all tickets</div></div>
+        <div class="art-card"><div class="art-label">Avg per Week</div><div class="art-value" style="color:#fbbf24;">38.9</div><div class="art-detail">Up 31/wk → 49/wk</div></div>
+        <div class="art-card"><div class="art-label">Help Desk Resolved</div><div class="art-value up">89.9%</div><div class="art-detail">943 of 1,049 tickets</div></div>
+        <div class="art-card"><div class="art-label">Escalated to Rock Team</div><div class="art-value down">106</div><div class="art-detail">10.1% escalation rate</div></div>
+        <div class="art-card"><div class="art-label">Rock Team Resolution</div><div class="art-value down">30.2h</div><div class="art-detail">Median (vs 0.96h help desk)</div></div>
+        <div class="art-card"><div class="art-label">Rock Team SLA</div><div class="art-value down">60.9%</div><div class="art-detail">36 violations of 92 resolved</div></div>
+        <div class="art-card"><div class="art-label">Current Backlog</div><div class="art-value" style="color:#fbbf24;">20</div><div class="art-detail">In Rock RMS group queue</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Key Findings</div>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Escalation rate is climbing sharply.</strong> Went from 4–8% in January to 26–38% in the last 4 weeks.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#34d399;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Help desk resolves ~90% of Rock tickets,</strong> primarily access requests (439) and general Rock RMS issues (448), handled by IT Support and IT On-Call groups.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Rock team SLA compliance is at 60.9%,</strong> with 36 violations. February was the worst month at 15 violations out of 31 escalations.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Rock team median resolution is 30.2 hours</strong> vs 0.96 hours for the help desk.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#4a9eff;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Top escalation reasons:</strong> scheduling issues (14), errors/bugs (13), check-in problems (10), connections/groups (10), and volunteer access edge cases (9).</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">The current backlog includes 2 tickets over 80 days old</strong> and 5 "Awaiting Response" tickets that may be stale.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#f87171;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Volume is trending up:</strong> Oct–Dec averaged 31 Rock tickets/week; Jan–Mar is running at 49/week (+56%).</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#4a9eff;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">Common escalation themes</strong> suggest potential for targeted KB articles, runbooks, or Rock platform improvements to reduce the escalation rate.</span></div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.7;"><span style="color:#fbbf24;font-weight:600;flex-shrink:0;">→</span><span><strong style="color:var(--text-primary);">The backlog needs a review pass:</strong> 3 unassigned tickets (including an Urgent), 2 at 80+ days, and several stale "Awaiting Response" tickets.</span></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Weekly Rock Ticket Volume</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Week</th><th>Total</th><th>Escalated</th><th>Esc %</th><th>Trend</th></tr></thead>
+            <tbody>
+              <tr><td class="val-mono">Jan 5</td><td class="val-mono">42</td><td class="val-mono">3</td><td class="val-up">7%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 12</td><td class="val-mono">82</td><td class="val-mono">3</td><td class="val-up">4%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 19</td><td class="val-mono">52</td><td class="val-mono">4</td><td class="val-up">8%</td><td><span class="badge green">Low</span></td></tr>
+              <tr><td class="val-mono">Jan 26</td><td class="val-mono">36</td><td class="val-mono">6</td><td class="val-warn">17%</td><td><span class="badge yellow">Rising</span></td></tr>
+              <tr><td class="val-mono">Feb 2</td><td class="val-mono">46</td><td class="val-mono">10</td><td class="val-warn">22%</td><td><span class="badge yellow">Rising</span></td></tr>
+              <tr><td class="val-mono">Feb 9</td><td class="val-mono">51</td><td class="val-mono">3</td><td class="val-up">6%</td><td><span class="badge green">Dip</span></td></tr>
+              <tr><td class="val-mono">Feb 16</td><td class="val-mono">39</td><td class="val-mono">8</td><td class="val-warn">21%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Feb 23</td><td class="val-mono">57</td><td class="val-mono">10</td><td class="val-warn">18%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Mar 2</td><td class="val-mono">55</td><td class="val-mono">20</td><td class="val-down">36%</td><td><span class="badge red">High</span></td></tr>
+              <tr><td class="val-mono">Mar 9</td><td class="val-mono">50</td><td class="val-mono">19</td><td class="val-down">38%</td><td><span class="badge red">High</span></td></tr>
+              <tr><td class="val-mono">Mar 16</td><td class="val-mono">38</td><td class="val-mono">10</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+              <tr><td class="val-mono">Mar 23</td><td class="val-mono">35</td><td class="val-mono">9</td><td class="val-warn">26%</td><td><span class="badge yellow">Elevated</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">Monthly Escalation + SLA Trend</div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Month</th><th>Total</th><th>Escalated</th><th>SLA Violations</th><th>SLA %</th></tr></thead>
+            <tbody>
+              <tr><td class="val-mono">Oct 2025</td><td class="val-mono">214</td><td class="val-mono">0</td><td class="val-mono">2</td><td class="val-up">99%</td></tr>
+              <tr><td class="val-mono">Nov 2025</td><td class="val-mono">139</td><td class="val-mono">0</td><td class="val-mono">5</td><td class="val-up">96%</td></tr>
+              <tr><td class="val-mono">Dec 2025</td><td class="val-mono">104</td><td class="val-mono">1</td><td class="val-mono">5</td><td class="val-up">95%</td></tr>
+              <tr><td class="val-mono">Jan 2026</td><td class="val-mono">212</td><td class="val-mono">16</td><td class="val-mono">12</td><td class="val-warn">94%</td></tr>
+              <tr><td class="val-mono">Feb 2026</td><td class="val-mono">193</td><td class="val-mono">31</td><td class="val-mono">21</td><td class="val-down">89%</td></tr>
+              <tr><td class="val-mono">Mar 2026</td><td class="val-mono">178</td><td class="val-mono">58</td><td class="val-mono">12</td><td class="val-warn">93%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Escalations went from near-zero in Oct–Dec to 58 in March. The Rock team queue didn't exist as a routing target until late December. SLA violations peaked in February.</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Help Desk Resolves — 943 tickets (89.9%)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Rock RMS general</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">448</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Access requests</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:98%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">439</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Check-in issues</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:12%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">52</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Cache clears</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:1%;height:100%;background:#4a9eff;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">3</span></div>
+        </div>
+        <div class="note"><strong>Median resolution:</strong> <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">0.96h (58 min)</span> · <strong>SLA:</strong> <span style="color:#34d399;font-family:'JetBrains Mono',monospace;">97.8%</span><br><strong>Primary agents:</strong> Alicia (174), Brian S. (113), Garrett (103), Beulah (73), Calvin (64)</div>
+      </div>
+      <div class="card">
+        <div class="section-label">Rock Team Escalations — 106 tickets (10.1%)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Scheduling</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:#f87171;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">14</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Errors / bugs</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:93%;height:100%;background:#f87171;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">13</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Check-in issues</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:71%;height:100%;background:#fb923c;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">10</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Connections / groups</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:71%;height:100%;background:#fb923c;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">10</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Volunteer access</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:64%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">9</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Span of care</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:36%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">5</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:160px;color:var(--text-secondary);">Onboarding</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="width:29%;height:100%;background:#a78bfa;border-radius:3px;"></div></div><span class="val-mono" style="width:28px;text-align:right;">4</span></div>
+        </div>
+        <div class="note"><strong>Median resolution:</strong> <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">30.2h</span> · <strong>SLA:</strong> <span style="color:#f87171;font-family:'JetBrains Mono',monospace;">60.9%</span> (36 violations of 92)<br><strong>Primary agents:</strong> Gordon Arber (16), Elle Rea (26), Chris Rea (6)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Response &amp; Resolution Times — Help Desk vs. Rock Team</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Metric</th><th>All Rock</th><th>Help Desk</th><th>Rock Team</th></tr></thead>
+          <tbody>
+            <tr><td class="cat-name">First response (median)</td><td class="val-mono">0.47h (28 min)</td><td class="val-up">0.45h (27 min)</td><td class="val-warn">0.62h (37 min)</td></tr>
+            <tr><td class="cat-name">First response (mean)</td><td class="val-mono">2.65h</td><td class="val-up">1.92h</td><td class="val-down">9.14h</td></tr>
+            <tr><td class="cat-name">Resolution (median)</td><td class="val-mono">1.20h</td><td class="val-up">0.96h (58 min)</td><td class="val-down">30.22h</td></tr>
+            <tr><td class="cat-name">Resolution (mean)</td><td class="val-mono">6.79h</td><td class="val-up">3.79h</td><td class="val-down">37.40h</td></tr>
+            <tr><td class="cat-name">Resolution SLA compliance</td><td class="val-mono">94.5%</td><td class="val-up">97.8%</td><td class="val-down">60.9%</td></tr>
+            <tr><td class="cat-name">First response SLA compliance</td><td class="val-mono">96.5%</td><td class="val-up">97.9%</td><td class="val-down">82.8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Current Backlog — Rock RMS Group (20 tickets)</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Ticket</th><th>Age</th><th>Status</th><th>Priority</th><th>Agent</th><th>Subject</th></tr></thead>
+          <tbody>
+            <tr><td class="val-mono">#9402</td><td><span class="badge red">84d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">Email list for Kelly Kaeser</td></tr>
+            <tr><td class="val-mono">#9466</td><td><span class="badge red">83d</span></td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Alicia Rodriguez</td><td style="font-size:11px;color:var(--text-secondary);">RMS Issue in Scheduling</td></tr>
+            <tr><td class="val-mono">#11641</td><td><span class="badge yellow">42d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Partner Summit 2026 landing page</td></tr>
+            <tr><td class="val-mono">#11891</td><td><span class="badge yellow">38d</span></td><td class="val-up">Resolved</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">BGC Process Notifications</td></tr>
+            <tr><td class="val-mono">#11894</td><td><span class="badge yellow">38d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - Volunteer Addresses</td></tr>
+            <tr><td class="val-mono">#12016</td><td><span class="badge yellow">35d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">YV Rock - BGC Step in Onboarding</td></tr>
+            <tr><td class="val-mono">#12181</td><td><span class="badge yellow">33d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">Setting up Ghaezal Pitt in both instances</td></tr>
+            <tr><td class="val-mono">#12378</td><td><span class="badge yellow">28d</span></td><td class="val-warn">Awaiting</td><td class="val-mono">Low</td><td class="val-mono">Chris Rea</td><td style="font-size:11px;color:var(--text-secondary);">No Response / Incorrect Service Data</td></tr>
+            <tr><td class="val-mono">#12702</td><td class="val-mono">24d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Unable to Upload LifeGroup Cover Photo</td></tr>
+            <tr><td class="val-mono">#13285</td><td class="val-mono">14d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Add "Short-Term Group End Date" column</td></tr>
+            <tr><td class="val-mono">#13311</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-warn">Medium</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Kelsi Evans Background Check</td></tr>
+            <tr><td class="val-mono">#13313</td><td class="val-mono">13d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Missions Event Attribute</td></tr>
+            <tr><td class="val-mono">#13356</td><td class="val-mono">12d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Error</td></tr>
+            <tr style="background:rgba(248,113,113,0.04);"><td class="val-mono">#13365</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;">⚠ Urgent</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Community Restriction</td></tr>
+            <tr><td class="val-mono">#13389</td><td class="val-mono">12d</td><td class="val-warn">Awaiting</td><td class="val-warn">High</td><td class="val-mono">Elle Rea</td><td style="font-size:11px;color:var(--text-secondary);">Rock Email Error</td></tr>
+            <tr><td class="val-mono">#13461</td><td class="val-mono">11d</td><td class="val-flat">Open</td><td class="val-mono">Low</td><td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;">No Agent</td><td style="font-size:11px;color:var(--text-secondary);">Missing Volunteer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout" style="margin-top:12px;">
+        <strong>⚠ Notable:</strong> 3 tickets have no agent assigned, including an Urgent (#13365). Two tickets (#9402, #9466) are over 80 days old. 5 Chris Rea tickets are in Awaiting Response status at 28–38 days.
+      </div>
+    </div>
+    <div class="note" style="padding:0;">Analysis generated from Freshservice ticket export (9,346 tickets, Sep 27 2025 – Mar 27 2026). Rock tickets identified by Sub-Category = "Rock". Escalations identified by Group = "Rock RMS". Help desk = all other groups.</div>
+  </div><!-- /page-tickets -->
+
+</div><!-- /dashboard -->
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`.nav-tab[onclick="showPage('${name}')"]`).classList.add('active');
+  if (name === 'overview') drawCharts();
+}
+
+let chartsDrawn = false;
+function drawCharts() {
+  if (chartsDrawn) {
+    // on resize they redraw anyway, but re-draw on tab switch to handle first visit
+  }
+  chartsDrawn = true;
+  drawChart('chart-completion', compSeries, fullLabels, 'art-completion', '%',   false);
+  drawChart('chart-median',     medSeries,  fullLabels, 'art-median',     'hrs', true);
+  drawChart('chart-staff',      staffSeries,fullLabels, 'art-staff',      '%',   false);
+}
+
+function populateExecSummary() {
+  // KPI 1 — comp 4-wk avg (excl Easter Apr 19) and YTD avg
+  const compVals = ytdDates.filter(d => d !== '2026-04-19').map(d => compAll[d]).filter(v => v !== null && v !== undefined);
+  const comp4wk = compVals.slice(-4);
+  const compYTD = compVals;
+  if (comp4wk.length) document.getElementById('exec-comp-4wk').textContent = (comp4wk.reduce((a,b)=>a+b,0)/comp4wk.length).toFixed(1) + '%';
+  if (compYTD.length) document.getElementById('exec-comp-ytd').textContent = (compYTD.reduce((a,b)=>a+b,0)/compYTD.length).toFixed(1) + '%';
+
+  // KPI 2 — median 4-wk avg (excl spikes and Easter)
+  const medVals = ytdDates.filter(d => d !== '2026-04-19').map(d => medAll[d]).filter(v => v !== null && v !== undefined && v < 1000);
+  const med4wk = medVals.slice(-4);
+  if (med4wk.length) document.getElementById('exec-med-4wk').textContent = Math.round(med4wk.reduce((a,b)=>a+b,0)/med4wk.length) + ' hrs';
+
+  // KPI 3 — staff YTD avg (excl Easter)
+  const staffVals = ytdDates.filter(d => d !== '2026-04-19').map(d => staffTotal[d]).filter(v => v !== null && v !== undefined);
+  if (staffVals.length) document.getElementById('exec-staff-ytd').textContent = (staffVals.reduce((a,b)=>a+b,0)/staffVals.length).toFixed(1) + '%';
+}
+
+const SPIKE = 1000;
+const allDatesSet = new Set();
+const compAll={}, medAll={}, staffTotal={}, staffBeta={}, staffNonBeta={};
+const compByType={}, medByType={};
+
+function ingest(rows) {
+  rows.forEach(([date, metric, grp, val]) => {
+    allDatesSet.add(date);
+    if (metric==='comp') {
+      if (grp==='All Connections') compAll[date]=val!==null?+(val*100).toFixed(1):null;
+      if (!compByType[grp]) compByType[grp]={};
+      compByType[grp][date]=val!==null?+(val*100).toFixed(1):null;
+    } else if (metric==='med') {
+      if (grp==='All Connections') medAll[date]=val;
+      if (!medByType[grp]) medByType[grp]={};
+      medByType[grp][date]=val;
+    } else if (metric==='staff') {
+      const pct=val!==null?+(val*100).toFixed(1):null;
+      if (grp==='Total') staffTotal[date]=pct;
+      else if (grp==='Beta Follow-Up') staffBeta[date]=pct;
+      else if (grp==='Non-Beta') staffNonBeta[date]=pct;
+    }
+  });
+}
+
+ingest([
+["2023-12-31","comp","All Connections",0.18],["2024-01-07","comp","All Connections",0.18],["2024-01-14","comp","All Connections",0.10],["2024-01-21","comp","All Connections",0.14],["2024-01-28","comp","All Connections",0.19],["2024-02-04","comp","All Connections",0.17],["2024-02-11","comp","All Connections",0.21],["2024-02-18","comp","All Connections",0.18],["2024-02-25","comp","All Connections",0.17],["2024-03-03","comp","All Connections",0.19],["2024-03-10","comp","All Connections",0.15],["2024-03-17","comp","All Connections",0.17],["2024-03-24","comp","All Connections",0.18],["2024-03-31","comp","All Connections",0.17],["2024-04-07","comp","All Connections",0.19],["2024-04-14","comp","All Connections",0.13],["2024-04-21","comp","All Connections",0.14],["2024-04-28","comp","All Connections",0.14],["2024-05-05","comp","All Connections",0.18],["2024-05-12","comp","All Connections",0.18],["2024-05-19","comp","All Connections",0.18],["2024-05-26","comp","All Connections",0.12],["2024-06-02","comp","All Connections",0.15],["2024-06-09","comp","All Connections",0.16],["2024-06-16","comp","All Connections",0.17],["2024-06-23","comp","All Connections",0.16],["2024-06-30","comp","All Connections",0.23],["2024-07-07","comp","All Connections",0.20],["2024-07-14","comp","All Connections",0.21],["2024-07-21","comp","All Connections",0.23],["2024-07-28","comp","All Connections",0.22],["2024-08-04","comp","All Connections",0.21],["2024-08-11","comp","All Connections",0.21],["2024-08-18","comp","All Connections",0.16],["2024-08-25","comp","All Connections",0.20],["2024-09-01","comp","All Connections",0.16],["2024-09-08","comp","All Connections",0.18],["2024-09-15","comp","All Connections",0.24],["2024-09-22","comp","All Connections",0.18],["2024-09-29","comp","All Connections",0.18],["2024-10-06","comp","All Connections",0.16],["2024-10-13","comp","All Connections",0.17],["2024-10-20","comp","All Connections",0.19],["2024-10-27","comp","All Connections",0.25],["2024-11-03","comp","All Connections",0.21],["2024-11-10","comp","All Connections",0.18],["2024-11-17","comp","All Connections",0.16],["2024-11-24","comp","All Connections",0.17],["2024-12-01","comp","All Connections",0.20],["2024-12-08","comp","All Connections",0.25],["2024-12-15","comp","All Connections",0.19],["2024-12-22","comp","All Connections",0.14],["2024-12-29","comp","All Connections",0.14],["2025-01-05","comp","All Connections",0.17],["2025-01-12","comp","All Connections",0.22],["2025-01-19","comp","All Connections",0.19],["2025-01-26","comp","All Connections",0.20],["2025-02-02","comp","All Connections",0.20],["2025-02-09","comp","All Connections",0.26],["2025-02-16","comp","All Connections",0.21],["2025-02-23","comp","All Connections",0.23],["2025-03-02","comp","All Connections",0.23],["2025-03-09","comp","All Connections",0.18],["2025-03-16","comp","All Connections",0.18],["2025-03-23","comp","All Connections",0.21],["2025-03-30","comp","All Connections",0.25],["2025-04-06","comp","All Connections",0.29],["2025-04-13","comp","All Connections",0.26],["2025-04-20","comp","All Connections",0.26],["2025-04-27","comp","All Connections",0.28],["2025-05-04","comp","All Connections",0.38],["2025-05-11","comp","All Connections",0.32],["2025-05-18","comp","All Connections",0.35],["2025-05-25","comp","All Connections",0.32],["2025-06-01","comp","All Connections",0.37],["2025-06-08","comp","All Connections",0.28],["2025-06-15","comp","All Connections",0.31],["2025-06-22","comp","All Connections",0.28],["2025-06-29","comp","All Connections",0.28],["2025-07-06","comp","All Connections",0.33],["2025-07-13","comp","All Connections",0.29],["2025-07-20","comp","All Connections",0.29],["2025-07-27","comp","All Connections",0.28],["2025-08-03","comp","All Connections",0.32],["2025-08-10","comp","All Connections",0.39],["2025-08-17","comp","All Connections",0.36],["2025-08-24","comp","All Connections",0.38],["2025-08-31","comp","All Connections",0.33],["2025-09-07","comp","All Connections",0.37],["2025-09-14","comp","All Connections",0.33],["2025-09-21","comp","All Connections",0.33],["2025-09-28","comp","All Connections",0.35],["2025-10-05","comp","All Connections",0.32],["2025-10-12","comp","All Connections",0.35],["2025-10-19","comp","All Connections",0.34],["2025-10-26","comp","All Connections",0.32],["2025-11-02","comp","All Connections",0.35],["2025-11-09","comp","All Connections",0.37],["2025-11-16","comp","All Connections",0.35],["2025-11-23","comp","All Connections",0.26],["2025-11-30","comp","All Connections",0.34],["2025-12-07","comp","All Connections",0.35],["2025-12-14","comp","All Connections",0.39],["2025-12-21","comp","All Connections",0.27],["2025-12-28","comp","All Connections",0.27],["2026-01-04","comp","All Connections",0.40],["2026-01-11","comp","All Connections",0.33],["2026-01-18","comp","All Connections",0.33],["2026-01-25","comp","All Connections",0.34],["2026-02-01","comp","All Connections",0.33],["2026-02-08","comp","All Connections",0.30],["2026-02-15","comp","All Connections",0.31],["2026-02-22","comp","All Connections",0.34],["2026-03-01","comp","All Connections",0.35],["2026-03-08","comp","All Connections",0.39],["2026-03-15","comp","All Connections",0.33],["2026-03-22","comp","All Connections",0.29],["2026-03-29","comp","All Connections",0.30],["2026-04-05","comp","All Connections",0.28],["2026-04-12","comp","All Connections",0.2769],["2026-04-19","comp","All Connections",0.2315],
+["2025-03-30","comp","LifeGroup Interest",0.51],["2025-04-06","comp","LifeGroup Interest",0.52],["2025-04-13","comp","LifeGroup Interest",0.51],["2025-04-20","comp","LifeGroup Interest",0.61],["2025-04-27","comp","LifeGroup Interest",0.67],["2025-05-04","comp","LifeGroup Interest",0.67],["2025-05-11","comp","LifeGroup Interest",0.61],["2025-05-18","comp","LifeGroup Interest",0.57],["2025-05-25","comp","LifeGroup Interest",0.59],["2025-06-01","comp","LifeGroup Interest",0.63],["2025-06-08","comp","LifeGroup Interest",0.61],["2025-06-15","comp","LifeGroup Interest",0.59],["2025-06-22","comp","LifeGroup Interest",0.59],["2025-06-29","comp","LifeGroup Interest",0.59],["2025-07-06","comp","LifeGroup Interest",0.65],["2025-07-13","comp","LifeGroup Interest",0.61],["2025-07-20","comp","LifeGroup Interest",0.63],["2025-07-27","comp","LifeGroup Interest",0.57],["2025-08-03","comp","LifeGroup Interest",0.57],["2025-08-10","comp","LifeGroup Interest",0.62],["2025-08-17","comp","LifeGroup Interest",0.57],["2025-08-24","comp","LifeGroup Interest",0.60],["2025-08-31","comp","LifeGroup Interest",0.58],["2025-09-07","comp","LifeGroup Interest",0.62],["2025-09-14","comp","LifeGroup Interest",0.62],["2025-09-21","comp","LifeGroup Interest",0.57],["2025-09-28","comp","LifeGroup Interest",0.59],["2025-10-05","comp","LifeGroup Interest",0.54],["2025-10-12","comp","LifeGroup Interest",0.63],["2025-10-19","comp","LifeGroup Interest",0.64],["2025-10-26","comp","LifeGroup Interest",0.61],["2025-11-02","comp","LifeGroup Interest",0.62],["2025-11-09","comp","LifeGroup Interest",0.60],["2025-11-16","comp","LifeGroup Interest",0.65],["2025-11-23","comp","LifeGroup Interest",0.57],["2025-11-30","comp","LifeGroup Interest",0.60],["2025-12-07","comp","LifeGroup Interest",0.61],["2025-12-14","comp","LifeGroup Interest",0.59],["2025-12-21","comp","LifeGroup Interest",0.48],["2025-12-28","comp","LifeGroup Interest",0.55],["2026-01-04","comp","LifeGroup Interest",0.61],["2026-01-11","comp","LifeGroup Interest",0.57],["2026-01-18","comp","LifeGroup Interest",0.57],["2026-01-25","comp","LifeGroup Interest",0.59],["2026-02-01","comp","LifeGroup Interest",0.60],["2026-02-08","comp","LifeGroup Interest",0.59],["2026-02-15","comp","LifeGroup Interest",0.59],["2026-02-22","comp","LifeGroup Interest",0.62],["2026-03-01","comp","LifeGroup Interest",0.66],["2026-03-08","comp","LifeGroup Interest",0.66],["2026-03-15","comp","LifeGroup Interest",0.60],["2026-03-22","comp","LifeGroup Interest",0.60],["2026-03-29","comp","LifeGroup Interest",0.59],["2026-04-05","comp","LifeGroup Interest",0.6053],["2026-04-12","comp","LifeGroup Interest",0.6335],["2026-04-19","comp","LifeGroup Interest",0.4618],
+["2026-01-04","comp","Commit to Christ",0.34],["2026-01-11","comp","Commit to Christ",0.21],["2026-01-18","comp","Commit to Christ",0.13],["2026-01-25","comp","Commit to Christ",0.15],["2026-02-01","comp","Commit to Christ",0.24],["2026-02-08","comp","Commit to Christ",0.23],["2026-02-15","comp","Commit to Christ",0.27],["2026-02-22","comp","Commit to Christ",0.19],["2026-03-01","comp","Commit to Christ",0.29],["2026-03-08","comp","Commit to Christ",0.31],["2026-03-15","comp","Commit to Christ",0.28],["2026-03-22","comp","Commit to Christ",0.07],["2026-03-29","comp","Commit to Christ",0.25],["2026-04-05","comp","Commit to Christ",0.1092],["2026-04-12","comp","Commit to Christ",0.122],["2026-04-19","comp","Commit to Christ",0.0],
+["2026-01-04","comp","I'm New",0.35],["2026-01-11","comp","I'm New",0.29],["2026-01-18","comp","I'm New",0.23],["2026-01-25","comp","I'm New",0.19],["2026-02-01","comp","I'm New",0.27],["2026-02-08","comp","I'm New",0.26],["2026-02-15","comp","I'm New",0.28],["2026-02-22","comp","I'm New",0.22],["2026-03-01","comp","I'm New",0.40],["2026-03-08","comp","I'm New",0.27],["2026-03-15","comp","I'm New",0.26],["2026-03-22","comp","I'm New",0.37],["2026-03-29","comp","I'm New",0.39],["2026-04-05","comp","I'm New",0.3908],["2026-04-12","comp","I'm New",0.2323],["2026-04-19","comp","I'm New",0.2966],
+["2026-01-04","comp","New Family Registration",0.18],["2026-01-11","comp","New Family Registration",0.16],["2026-01-18","comp","New Family Registration",0.18],["2026-01-25","comp","New Family Registration",0.16],["2026-02-01","comp","New Family Registration",0.16],["2026-02-08","comp","New Family Registration",0.16],["2026-02-15","comp","New Family Registration",0.16],["2026-02-22","comp","New Family Registration",0.25],["2026-03-01","comp","New Family Registration",0.16],["2026-03-08","comp","New Family Registration",0.22],["2026-03-15","comp","New Family Registration",0.19],["2026-03-22","comp","New Family Registration",0.18],["2026-03-29","comp","New Family Registration",0.10],["2026-04-05","comp","New Family Registration",0.1877],["2026-04-12","comp","New Family Registration",0.1343],["2026-04-19","comp","New Family Registration",0.134],
+["2026-01-04","comp","Prayer Request",0.23],["2026-01-11","comp","Prayer Request",0.17],["2026-01-18","comp","Prayer Request",0.18],["2026-01-25","comp","Prayer Request",0.14],["2026-02-01","comp","Prayer Request",0.21],["2026-02-08","comp","Prayer Request",0.17],["2026-02-15","comp","Prayer Request",0.16],["2026-02-22","comp","Prayer Request",0.20],["2026-03-01","comp","Prayer Request",0.21],["2026-03-08","comp","Prayer Request",0.24],["2026-03-15","comp","Prayer Request",0.21],["2026-03-22","comp","Prayer Request",0.20],["2026-03-29","comp","Prayer Request",0.23],["2026-04-05","comp","Prayer Request",0.1832],["2026-04-12","comp","Prayer Request",0.1779],["2026-04-19","comp","Prayer Request",0.1392],
+["2026-01-04","comp","Baptism",0.36],["2026-01-11","comp","Baptism",0.16],["2026-01-18","comp","Baptism",0.27],["2026-01-25","comp","Baptism",0.14],["2026-02-01","comp","Baptism",0.13],["2026-02-08","comp","Baptism",0.23],["2026-02-15","comp","Baptism",0.11],["2026-02-22","comp","Baptism",0.22],["2026-03-01","comp","Baptism",0.09],["2026-03-08","comp","Baptism",0.27],["2026-03-15","comp","Baptism",0.33],["2026-03-22","comp","Baptism",0.20],["2026-03-29","comp","Baptism",0.20],["2026-04-05","comp","Baptism",0.3294],["2026-04-12","comp","Baptism",0.093],["2026-04-19","comp","Baptism",0.125],
+["2026-01-04","comp","Renewing Commitment to Christ",0.37],["2026-01-11","comp","Renewing Commitment to Christ",0.29],["2026-01-18","comp","Renewing Commitment to Christ",0.19],["2026-01-25","comp","Renewing Commitment to Christ",0.13],["2026-02-01","comp","Renewing Commitment to Christ",0.22],["2026-02-08","comp","Renewing Commitment to Christ",0.15],["2026-02-15","comp","Renewing Commitment to Christ",0.29],["2026-02-22","comp","Renewing Commitment to Christ",0.27],["2026-03-01","comp","Renewing Commitment to Christ",0.33],["2026-03-08","comp","Renewing Commitment to Christ",0.20],["2026-03-15","comp","Renewing Commitment to Christ",0.33],["2026-03-22","comp","Renewing Commitment to Christ",0.16],["2026-03-29","comp","Renewing Commitment to Christ",0.31],["2026-04-05","comp","Renewing Commitment to Christ",0.3519],["2026-04-12","comp","Renewing Commitment to Christ",0.0714],["2026-04-19","comp","Renewing Commitment to Christ",0.3333],
+["2026-01-04","comp","Serving Interest",0.27],["2026-01-11","comp","Serving Interest",0.46],["2026-01-18","comp","Serving Interest",0.21],["2026-01-25","comp","Serving Interest",0.04],["2026-02-01","comp","Serving Interest",0.24],["2026-02-08","comp","Serving Interest",0.20],["2026-02-15","comp","Serving Interest",0.38],["2026-02-22","comp","Serving Interest",0.04],["2026-03-01","comp","Serving Interest",0.13],["2026-03-08","comp","Serving Interest",0.07],["2026-03-15","comp","Serving Interest",0.44],["2026-03-22","comp","Serving Interest",0.20],["2026-03-29","comp","Serving Interest",0.31],["2026-04-05","comp","Serving Interest",0.0909],["2026-04-12","comp","Serving Interest",0.2143],["2026-04-19","comp","Serving Interest",0.2105],
+["2023-12-31","med","All Connections",10],["2024-01-07","med","All Connections",32],["2024-01-14","med","All Connections",55],["2024-01-21","med","All Connections",64],["2024-01-28","med","All Connections",40],["2024-02-04","med","All Connections",79],["2024-02-11","med","All Connections",44],["2024-02-18","med","All Connections",73],["2024-02-25","med","All Connections",69],["2024-03-03","med","All Connections",70],["2024-03-10","med","All Connections",72],["2024-03-17","med","All Connections",119],["2024-03-24","med","All Connections",79],["2024-03-31","med","All Connections",46],["2024-04-07","med","All Connections",50],["2024-04-14","med","All Connections",100],["2024-04-21","med","All Connections",75],["2024-04-28","med","All Connections",74],["2024-05-05","med","All Connections",74],["2024-05-12","med","All Connections",431],["2024-05-19","med","All Connections",187],["2024-05-26","med","All Connections",223],["2024-06-02","med","All Connections",72],["2024-06-09","med","All Connections",69],["2024-06-16","med","All Connections",166],["2024-06-23","med","All Connections",68],["2024-06-30","med","All Connections",46],["2024-07-07","med","All Connections",54],["2024-07-14","med","All Connections",382],["2024-07-21","med","All Connections",101],["2024-07-28","med","All Connections",72],["2024-08-04","med","All Connections",70],["2024-08-11","med","All Connections",354],["2024-08-18","med","All Connections",381],["2024-08-25","med","All Connections",101],["2024-09-01","med","All Connections",77],["2024-09-08","med","All Connections",102],["2024-09-15","med","All Connections",116],["2024-09-22","med","All Connections",71],["2024-09-29","med","All Connections",55],["2024-10-06","med","All Connections",183],["2024-10-13","med","All Connections",70],["2024-10-20","med","All Connections",94],["2024-10-27","med","All Connections",47],["2024-11-03","med","All Connections",70],["2024-11-10","med","All Connections",108],["2024-11-17","med","All Connections",70],["2024-11-24","med","All Connections",51],["2024-12-01","med","All Connections",527],["2024-12-08","med","All Connections",165],["2024-12-15","med","All Connections",52],["2024-12-22","med","All Connections",27],["2024-12-29","med","All Connections",93],["2025-01-05","med","All Connections",283],["2025-01-12","med","All Connections",74],["2025-01-19","med","All Connections",89],["2025-01-26","med","All Connections",44],["2025-02-02","med","All Connections",139],["2025-02-09","med","All Connections",73],["2025-02-16","med","All Connections",48],["2025-02-23","med","All Connections",170],["2025-03-02","med","All Connections",119],["2025-03-09","med","All Connections",600],["2025-03-16","med","All Connections",163],["2025-03-23","med","All Connections",54],["2025-03-30","med","All Connections",49],["2025-04-06","med","All Connections",48],["2025-04-13","med","All Connections",131],["2025-04-20","med","All Connections",48],["2025-04-27","med","All Connections",51],["2025-05-04","med","All Connections",33],["2025-05-11","med","All Connections",30],["2025-05-18","med","All Connections",48],["2025-05-25","med","All Connections",6650],["2025-06-01","med","All Connections",46],["2025-06-08","med","All Connections",44],["2025-06-15","med","All Connections",55],["2025-06-22","med","All Connections",29],["2025-06-29","med","All Connections",54],["2025-07-06","med","All Connections",67],["2025-07-13","med","All Connections",60],["2025-07-20","med","All Connections",31],["2025-07-27","med","All Connections",240],["2025-08-03","med","All Connections",138],["2025-08-10","med","All Connections",3288],["2025-08-17","med","All Connections",30],["2025-08-24","med","All Connections",28],["2025-08-31","med","All Connections",73],["2025-09-07","med","All Connections",48],["2025-09-14","med","All Connections",56],["2025-09-21","med","All Connections",2356],["2025-09-28","med","All Connections",23],["2025-10-05","med","All Connections",52],["2025-10-12","med","All Connections",35],["2025-10-19","med","All Connections",49],["2025-10-26","med","All Connections",40],["2025-11-02","med","All Connections",44],["2025-11-09","med","All Connections",28],["2025-11-16","med","All Connections",47],["2025-11-23","med","All Connections",48],["2025-11-30","med","All Connections",3578],["2025-12-07","med","All Connections",45],["2025-12-14","med","All Connections",26],["2025-12-21","med","All Connections",27],["2025-12-28","med","All Connections",54],["2026-01-04","med","All Connections",42],["2026-01-11","med","All Connections",73],["2026-01-18","med","All Connections",45],["2026-01-25","med","All Connections",99],["2026-02-01","med","All Connections",47],["2026-02-08","med","All Connections",49],["2026-02-15","med","All Connections",69],["2026-02-22","med","All Connections",52],["2026-03-01","med","All Connections",45],["2026-03-08","med","All Connections",28],["2026-03-15","med","All Connections",3748],["2026-03-22","med","All Connections",52],["2026-03-29","med","All Connections",34],["2026-04-05","med","All Connections",34],["2026-04-12","med","All Connections",46],["2026-04-19","med","All Connections",19],
+["2025-03-30","med","LifeGroup Interest",3],["2025-04-06","med","LifeGroup Interest",5],["2025-04-13","med","LifeGroup Interest",13],["2025-04-20","med","LifeGroup Interest",13],["2025-04-27","med","LifeGroup Interest",11],["2025-05-04","med","LifeGroup Interest",11],["2025-05-11","med","LifeGroup Interest",12],["2025-05-18","med","LifeGroup Interest",11],["2025-05-25","med","LifeGroup Interest",14],["2025-06-01","med","LifeGroup Interest",13],["2025-06-08","med","LifeGroup Interest",11],["2025-06-15","med","LifeGroup Interest",14],["2025-06-22","med","LifeGroup Interest",11],["2025-06-29","med","LifeGroup Interest",13],["2025-07-06","med","LifeGroup Interest",14],["2025-07-13","med","LifeGroup Interest",15],["2025-07-20","med","LifeGroup Interest",12],["2025-07-27","med","LifeGroup Interest",13],["2025-08-03","med","LifeGroup Interest",12],["2025-08-10","med","LifeGroup Interest",13],["2025-08-17","med","LifeGroup Interest",12],["2025-08-24","med","LifeGroup Interest",14],["2025-08-31","med","LifeGroup Interest",12],["2025-09-07","med","LifeGroup Interest",14],["2025-09-14","med","LifeGroup Interest",14],["2025-09-21","med","LifeGroup Interest",13],["2025-09-28","med","LifeGroup Interest",16],["2025-10-05","med","LifeGroup Interest",27],["2025-10-12","med","LifeGroup Interest",16],["2025-10-19","med","LifeGroup Interest",14],["2025-10-26","med","LifeGroup Interest",15],["2025-11-02","med","LifeGroup Interest",14],["2025-11-09","med","LifeGroup Interest",14],["2025-11-16","med","LifeGroup Interest",15],["2025-11-23","med","LifeGroup Interest",17],["2025-11-30","med","LifeGroup Interest",19],["2025-12-07","med","LifeGroup Interest",11],["2025-12-14","med","LifeGroup Interest",14],["2025-12-21","med","LifeGroup Interest",17],["2025-12-28","med","LifeGroup Interest",11],["2026-01-04","med","LifeGroup Interest",13],["2026-01-11","med","LifeGroup Interest",20],["2026-01-18","med","LifeGroup Interest",14],["2026-01-25","med","LifeGroup Interest",18],["2026-02-01","med","LifeGroup Interest",19],["2026-02-08","med","LifeGroup Interest",15],["2026-02-15","med","LifeGroup Interest",14],["2026-02-22","med","LifeGroup Interest",15],["2026-03-01","med","LifeGroup Interest",15],["2026-03-08","med","LifeGroup Interest",11],["2026-03-15","med","LifeGroup Interest",15],["2026-03-22","med","LifeGroup Interest",18],["2026-03-29","med","LifeGroup Interest",12],["2026-04-05","med","LifeGroup Interest",20],["2026-04-12","med","LifeGroup Interest",13],["2026-04-19","med","LifeGroup Interest",3],
+["2026-01-04","med","I'm New",60],["2026-01-11","med","I'm New",170],["2026-01-18","med","I'm New",72],["2026-01-25","med","I'm New",122],["2026-02-01","med","I'm New",48],["2026-02-08","med","I'm New",61],["2026-02-15","med","I'm New",51],["2026-02-22","med","I'm New",193],["2026-03-01","med","I'm New",44],["2026-03-08","med","I'm New",68],["2026-03-15","med","I'm New",3406],["2026-03-22","med","I'm New",24],["2026-03-29","med","I'm New",25],["2026-04-05","med","I'm New",25],["2026-04-12","med","I'm New",47],["2026-04-19","med","I'm New",21],
+["2026-01-04","med","New Family Registration",175],["2026-01-11","med","New Family Registration",48],["2026-01-18","med","New Family Registration",99],["2026-01-25","med","New Family Registration",102],["2026-02-01","med","New Family Registration",240],["2026-02-08","med","New Family Registration",75],["2026-02-15","med","New Family Registration",230],["2026-02-22","med","New Family Registration",66],["2026-03-01","med","New Family Registration",47],["2026-03-08","med","New Family Registration",32],["2026-03-15","med","New Family Registration",5093],["2026-03-22","med","New Family Registration",47],["2026-03-29","med","New Family Registration",63],["2026-04-05","med","New Family Registration",47],["2026-04-12","med","New Family Registration",51],["2026-04-19","med","New Family Registration",165],
+["2026-01-04","med","Prayer Request",113],["2026-01-11","med","Prayer Request",164],["2026-01-18","med","Prayer Request",54],["2026-01-25","med","Prayer Request",189],["2026-02-01","med","Prayer Request",52],["2026-02-08","med","Prayer Request",95],["2026-02-15","med","Prayer Request",125],["2026-02-22","med","Prayer Request",94],["2026-03-01","med","Prayer Request",66],["2026-03-08","med","Prayer Request",55],["2026-03-15","med","Prayer Request",3717],["2026-03-22","med","Prayer Request",76],["2026-03-29","med","Prayer Request",47],["2026-04-05","med","Prayer Request",49],["2026-04-12","med","Prayer Request",73],["2026-04-19","med","Prayer Request",43],
+["2026-01-04","med","Baptism",257],["2026-01-11","med","Baptism",2043],["2026-01-18","med","Baptism",50],["2026-01-25","med","Baptism",605],["2026-02-01","med","Baptism",47],["2026-02-08","med","Baptism",93],["2026-02-15","med","Baptism",192],["2026-02-22","med","Baptism",364],["2026-03-01","med","Baptism",504],["2026-03-08","med","Baptism",81],["2026-03-15","med","Baptism",8312],["2026-03-22","med","Baptism",48],["2026-03-29","med","Baptism",71],["2026-04-05","med","Baptism",45],["2026-04-12","med","Baptism",144],["2026-04-19","med","Baptism",335],
+["2026-01-04","med","Renewing Commitment to Christ",22],["2026-01-11","med","Renewing Commitment to Christ",100],["2026-01-18","med","Renewing Commitment to Christ",165],["2026-01-25","med","Renewing Commitment to Christ",151],["2026-02-01","med","Renewing Commitment to Christ",204],["2026-02-08","med","Renewing Commitment to Christ",191],["2026-02-15","med","Renewing Commitment to Christ",48],["2026-02-22","med","Renewing Commitment to Christ",336],["2026-03-01","med","Renewing Commitment to Christ",40],["2026-03-08","med","Renewing Commitment to Christ",69],["2026-03-15","med","Renewing Commitment to Christ",2284],["2026-03-22","med","Renewing Commitment to Christ",40],["2026-03-29","med","Renewing Commitment to Christ",165],["2026-04-05","med","Renewing Commitment to Christ",44],["2026-04-12","med","Renewing Commitment to Christ",44],["2026-04-19","med","Renewing Commitment to Christ",336],
+["2026-01-04","med","Serving Interest",186],["2026-01-11","med","Serving Interest",22],["2026-01-18","med","Serving Interest",74],["2026-01-25","med","Serving Interest",22],["2026-02-01","med","Serving Interest",164],["2026-02-08","med","Serving Interest",47],["2026-02-15","med","Serving Interest",69],["2026-02-22","med","Serving Interest",48],["2026-03-01","med","Serving Interest",695],["2026-03-08","med","Serving Interest",189],["2026-03-15","med","Serving Interest",4416],["2026-03-22","med","Serving Interest",47],["2026-03-29","med","Serving Interest",48],["2026-04-05","med","Serving Interest",94],["2026-04-12","med","Serving Interest",25],["2026-04-19","med","Serving Interest",2],
+["2026-01-04","med","Commit to Christ",23],["2026-01-11","med","Commit to Christ",871],["2026-01-18","med","Commit to Christ",212],["2026-01-25","med","Commit to Christ",72],["2026-02-01","med","Commit to Christ",144],["2026-02-08","med","Commit to Christ",192],["2026-02-15","med","Commit to Christ",104],["2026-02-22","med","Commit to Christ",593],["2026-03-01","med","Commit to Christ",165],["2026-03-08","med","Commit to Christ",3023],["2026-03-15","med","Commit to Christ",2688],["2026-03-22","med","Commit to Christ",48],["2026-03-29","med","Commit to Christ",65],["2026-04-05","med","Commit to Christ",66],["2026-04-12","med","Commit to Christ",163],["2026-04-19","med","Commit to Christ",664],
+["2024-01-07","staff","Total",0.72],["2024-01-14","staff","Total",0.56],["2024-01-21","staff","Total",0.62],["2024-01-28","staff","Total",0.49],["2024-02-04","staff","Total",0.71],["2024-02-11","staff","Total",0.71],["2024-02-18","staff","Total",0.61],["2024-02-25","staff","Total",0.67],["2024-03-03","staff","Total",0.67],["2024-03-10","staff","Total",0.66],["2024-03-17","staff","Total",0.63],["2024-03-24","staff","Total",0.57],["2024-03-31","staff","Total",0.67],["2024-04-07","staff","Total",0.59],["2024-04-14","staff","Total",0.60],["2024-04-21","staff","Total",0.59],["2024-04-28","staff","Total",0.54],["2024-05-05","staff","Total",0.51],["2024-05-12","staff","Total",0.59],["2024-05-19","staff","Total",0.52],["2024-05-26","staff","Total",0.51],["2024-06-02","staff","Total",0.53],["2024-06-09","staff","Total",0.52],["2024-06-16","staff","Total",0.45],["2024-06-23","staff","Total",0.39],["2024-06-30","staff","Total",0.51],["2024-07-07","staff","Total",0.59],["2024-07-14","staff","Total",0.61],["2024-07-21","staff","Total",0.58],["2024-07-28","staff","Total",0.53],["2024-08-04","staff","Total",0.56],["2024-08-11","staff","Total",0.65],["2024-08-18","staff","Total",0.59],["2024-08-25","staff","Total",0.57],["2024-09-01","staff","Total",0.57],["2024-09-08","staff","Total",0.53],["2024-09-15","staff","Total",0.59],["2024-09-22","staff","Total",0.57],["2024-09-29","staff","Total",0.49],["2024-10-06","staff","Total",0.60],["2024-10-13","staff","Total",0.49],["2024-10-20","staff","Total",0.54],["2024-10-27","staff","Total",0.54],["2024-11-03","staff","Total",0.51],["2024-11-10","staff","Total",0.48],["2024-11-17","staff","Total",0.57],["2024-11-24","staff","Total",0.50],["2024-12-01","staff","Total",0.50],["2024-12-08","staff","Total",0.58],["2024-12-15","staff","Total",0.52],["2024-12-22","staff","Total",0.41],["2024-12-29","staff","Total",0.36],["2025-01-05","staff","Total",0.58],["2025-01-12","staff","Total",0.62],["2025-01-19","staff","Total",0.61],["2025-01-26","staff","Total",0.54],["2025-02-02","staff","Total",0.58],["2025-02-09","staff","Total",0.66],["2025-02-16","staff","Total",0.60],["2025-02-23","staff","Total",0.57],["2025-03-02","staff","Total",0.59],["2025-03-09","staff","Total",0.59],["2025-03-16","staff","Total",0.57],["2025-03-23","staff","Total",0.61],["2025-03-30","staff","Total",0.61],["2025-04-06","staff","Total",0.57],["2025-04-13","staff","Total",0.62],["2025-04-20","staff","Total",0.65],["2025-04-27","staff","Total",0.52],["2025-05-04","staff","Total",0.50],["2025-05-11","staff","Total",0.51],["2025-05-18","staff","Total",0.47],["2025-05-25","staff","Total",0.47],["2025-06-01","staff","Total",0.47],["2025-06-08","staff","Total",0.43],["2025-06-15","staff","Total",0.44],["2025-06-22","staff","Total",0.39],["2025-06-29","staff","Total",0.52],["2025-07-06","staff","Total",0.52],["2025-07-13","staff","Total",0.55],["2025-07-20","staff","Total",0.55],["2025-07-27","staff","Total",0.50],["2025-08-03","staff","Total",0.54],["2025-08-10","staff","Total",0.55],["2025-08-17","staff","Total",0.55],["2025-08-24","staff","Total",0.53],["2025-08-31","staff","Total",0.52],["2025-09-07","staff","Total",0.50],["2025-09-14","staff","Total",0.51],["2025-09-21","staff","Total",0.54],["2025-09-28","staff","Total",0.46],["2025-10-05","staff","Total",0.52],["2025-10-12","staff","Total",0.49],["2025-10-19","staff","Total",0.53],["2025-10-26","staff","Total",0.47],["2025-11-02","staff","Total",0.48],["2025-11-09","staff","Total",0.44],["2025-11-16","staff","Total",0.45],["2025-11-23","staff","Total",0.39],["2025-11-30","staff","Total",0.52],["2025-12-07","staff","Total",0.54],["2025-12-14","staff","Total",0.50],["2025-12-21","staff","Total",0.37],["2025-12-28","staff","Total",0.39],["2026-01-04","staff","Total",0.55],["2026-01-11","staff","Total",0.48],["2026-01-18","staff","Total",0.52],["2026-01-25","staff","Total",0.28],["2026-02-01","staff","Total",0.58],["2026-02-08","staff","Total",0.57],["2026-02-15","staff","Total",0.56],["2026-02-22","staff","Total",0.54],["2026-03-01","staff","Total",0.57],["2026-03-08","staff","Total",0.56],["2026-03-15","staff","Total",0.49],["2026-03-22","staff","Total",0.52],["2026-03-29","staff","Total",0.50],["2026-04-05","staff","Total",0.61],["2026-04-12","staff","Total",0.57],["2026-04-19","staff","Total",0.22],
+["2024-07-28","staff","Beta Follow-Up",1.29],["2024-08-04","staff","Beta Follow-Up",1.00],["2024-08-11","staff","Beta Follow-Up",1.14],["2024-08-18","staff","Beta Follow-Up",1.00],["2024-08-25","staff","Beta Follow-Up",0.86],["2024-09-01","staff","Beta Follow-Up",0.86],["2024-09-08","staff","Beta Follow-Up",0.86],["2024-09-15","staff","Beta Follow-Up",1.14],["2024-09-22","staff","Beta Follow-Up",1.00],["2024-09-29","staff","Beta Follow-Up",0.67],["2024-10-06","staff","Beta Follow-Up",1.00],["2024-10-13","staff","Beta Follow-Up",1.00],["2024-10-20","staff","Beta Follow-Up",1.00],["2024-10-27","staff","Beta Follow-Up",0.78],["2024-11-03","staff","Beta Follow-Up",1.00],["2024-11-10","staff","Beta Follow-Up",0.78],["2024-11-17","staff","Beta Follow-Up",0.80],["2024-11-24","staff","Beta Follow-Up",0.85],["2024-12-01","staff","Beta Follow-Up",0.93],["2024-12-08","staff","Beta Follow-Up",0.93],["2024-12-15","staff","Beta Follow-Up",0.88],["2024-12-22","staff","Beta Follow-Up",0.72],["2024-12-29","staff","Beta Follow-Up",0.60],["2025-01-05","staff","Beta Follow-Up",0.95],["2025-01-12","staff","Beta Follow-Up",0.82],["2025-01-19","staff","Beta Follow-Up",0.89],["2025-01-26","staff","Beta Follow-Up",0.70],["2025-02-02","staff","Beta Follow-Up",0.78],["2025-02-09","staff","Beta Follow-Up",0.91],["2025-02-16","staff","Beta Follow-Up",0.83],["2025-02-23","staff","Beta Follow-Up",0.67],["2025-03-02","staff","Beta Follow-Up",0.74],["2025-03-09","staff","Beta Follow-Up",0.74],["2025-03-16","staff","Beta Follow-Up",0.77],["2025-03-23","staff","Beta Follow-Up",0.82],["2025-03-30","staff","Beta Follow-Up",0.79],["2025-04-06","staff","Beta Follow-Up",0.66],["2025-04-13","staff","Beta Follow-Up",0.77],["2025-04-20","staff","Beta Follow-Up",0.82],["2025-04-27","staff","Beta Follow-Up",0.62],["2025-05-04","staff","Beta Follow-Up",0.64],["2025-05-11","staff","Beta Follow-Up",0.64],["2025-05-18","staff","Beta Follow-Up",0.72],["2025-05-25","staff","Beta Follow-Up",0.66],["2025-06-01","staff","Beta Follow-Up",0.63],["2025-06-08","staff","Beta Follow-Up",0.56],["2025-06-15","staff","Beta Follow-Up",0.59],["2025-06-22","staff","Beta Follow-Up",0.29],["2025-06-29","staff","Beta Follow-Up",0.61],["2025-07-06","staff","Beta Follow-Up",0.59],["2025-07-13","staff","Beta Follow-Up",0.74],["2025-07-20","staff","Beta Follow-Up",0.66],["2025-07-27","staff","Beta Follow-Up",0.60],["2025-08-03","staff","Beta Follow-Up",0.67],["2025-08-10","staff","Beta Follow-Up",0.61],["2025-08-17","staff","Beta Follow-Up",0.73],["2025-08-24","staff","Beta Follow-Up",0.69],["2025-08-31","staff","Beta Follow-Up",0.66],["2025-09-07","staff","Beta Follow-Up",0.68],["2025-09-14","staff","Beta Follow-Up",0.68],["2025-09-21","staff","Beta Follow-Up",0.71],["2025-09-28","staff","Beta Follow-Up",0.55],["2025-10-05","staff","Beta Follow-Up",0.78],["2025-10-12","staff","Beta Follow-Up",0.58],["2025-10-19","staff","Beta Follow-Up",0.71],["2025-10-26","staff","Beta Follow-Up",0.65],["2025-11-02","staff","Beta Follow-Up",0.69],["2025-11-09","staff","Beta Follow-Up",0.60],["2025-11-16","staff","Beta Follow-Up",0.63],["2025-11-23","staff","Beta Follow-Up",0.54],["2025-11-30","staff","Beta Follow-Up",0.65],["2025-12-07","staff","Beta Follow-Up",0.75],["2025-12-14","staff","Beta Follow-Up",0.68],["2025-12-21","staff","Beta Follow-Up",0.46],["2025-12-28","staff","Beta Follow-Up",0.52],["2026-01-04","staff","Beta Follow-Up",0.68],["2026-01-11","staff","Beta Follow-Up",0.68],["2026-01-18","staff","Beta Follow-Up",0.66],["2026-01-25","staff","Beta Follow-Up",0.37],["2026-02-01","staff","Beta Follow-Up",0.72],["2026-02-08","staff","Beta Follow-Up",0.72],["2026-02-15","staff","Beta Follow-Up",0.67],["2026-02-22","staff","Beta Follow-Up",0.70],["2026-03-01","staff","Beta Follow-Up",0.71],["2026-03-08","staff","Beta Follow-Up",0.72],["2026-03-15","staff","Beta Follow-Up",0.58],["2026-03-22","staff","Beta Follow-Up",0.63],["2026-03-29","staff","Beta Follow-Up",0.63],["2026-04-05","staff","Beta Follow-Up",0.78],["2026-04-12","staff","Beta Follow-Up",0.73],["2026-04-19","staff","Beta Follow-Up",0.27],
+["2024-01-07","staff","Non-Beta",0.72],["2024-01-14","staff","Non-Beta",0.56],["2024-01-21","staff","Non-Beta",0.62],["2024-01-28","staff","Non-Beta",0.49],["2024-02-04","staff","Non-Beta",0.71],["2024-02-11","staff","Non-Beta",0.71],["2024-02-18","staff","Non-Beta",0.61],["2024-02-25","staff","Non-Beta",0.67],["2024-03-03","staff","Non-Beta",0.67],["2024-03-10","staff","Non-Beta",0.66],["2024-03-17","staff","Non-Beta",0.63],["2024-03-24","staff","Non-Beta",0.57],["2024-03-31","staff","Non-Beta",0.67],["2024-04-07","staff","Non-Beta",0.59],["2024-04-14","staff","Non-Beta",0.60],["2024-04-21","staff","Non-Beta",0.59],["2024-04-28","staff","Non-Beta",0.54],["2024-05-05","staff","Non-Beta",0.51],["2024-05-12","staff","Non-Beta",0.59],["2024-05-19","staff","Non-Beta",0.52],["2024-05-26","staff","Non-Beta",0.51],["2024-06-02","staff","Non-Beta",0.53],["2024-06-09","staff","Non-Beta",0.52],["2024-06-16","staff","Non-Beta",0.45],["2024-06-23","staff","Non-Beta",0.39],["2024-06-30","staff","Non-Beta",0.51],["2024-07-07","staff","Non-Beta",0.59],["2024-07-14","staff","Non-Beta",0.61],["2024-07-21","staff","Non-Beta",0.58],["2024-07-28","staff","Non-Beta",0.51],["2024-08-04","staff","Non-Beta",0.55],["2024-08-11","staff","Non-Beta",0.63],["2024-08-18","staff","Non-Beta",0.57],["2024-08-25","staff","Non-Beta",0.56],["2024-09-01","staff","Non-Beta",0.56],["2024-09-08","staff","Non-Beta",0.52],["2024-09-15","staff","Non-Beta",0.57],["2024-09-22","staff","Non-Beta",0.55],["2024-09-29","staff","Non-Beta",0.47],["2024-10-06","staff","Non-Beta",0.58],["2024-10-13","staff","Non-Beta",0.47],["2024-10-20","staff","Non-Beta",0.52],["2024-10-27","staff","Non-Beta",0.53],["2024-11-03","staff","Non-Beta",0.49],["2024-11-10","staff","Non-Beta",0.45],["2024-11-17","staff","Non-Beta",0.56],["2024-11-24","staff","Non-Beta",0.46],["2024-12-01","staff","Non-Beta",0.49],["2024-12-08","staff","Non-Beta",0.54],["2024-12-15","staff","Non-Beta",0.48],["2024-12-22","staff","Non-Beta",0.37],["2024-12-29","staff","Non-Beta",0.33],["2025-01-05","staff","Non-Beta",0.54],["2025-01-12","staff","Non-Beta",0.59],["2025-01-19","staff","Non-Beta",0.58],["2025-01-26","staff","Non-Beta",0.50],["2025-02-02","staff","Non-Beta",0.54],["2025-02-09","staff","Non-Beta",0.60],["2025-02-16","staff","Non-Beta",0.56],["2025-02-23","staff","Non-Beta",0.53],["2025-03-02","staff","Non-Beta",0.55],["2025-03-09","staff","Non-Beta",0.54],["2025-03-16","staff","Non-Beta",0.52],["2025-03-23","staff","Non-Beta",0.55],["2025-03-30","staff","Non-Beta",0.58],["2025-04-06","staff","Non-Beta",0.55],["2025-04-13","staff","Non-Beta",0.60],["2025-04-20","staff","Non-Beta",0.60],["2025-04-27","staff","Non-Beta",0.50],["2025-05-04","staff","Non-Beta",0.47],["2025-05-11","staff","Non-Beta",0.48],["2025-05-18","staff","Non-Beta",0.41],["2025-05-25","staff","Non-Beta",0.43],["2025-06-01","staff","Non-Beta",0.44],["2025-06-08","staff","Non-Beta",0.40],["2025-06-15","staff","Non-Beta",0.40],["2025-06-22","staff","Non-Beta",0.38],["2025-06-29","staff","Non-Beta",0.49],["2025-07-06","staff","Non-Beta",0.49],["2025-07-13","staff","Non-Beta",0.50],["2025-07-20","staff","Non-Beta",0.52],["2025-07-27","staff","Non-Beta",0.48],["2025-08-03","staff","Non-Beta",0.51],["2025-08-10","staff","Non-Beta",0.53],["2025-08-17","staff","Non-Beta",0.49],["2025-08-24","staff","Non-Beta",0.49],["2025-08-31","staff","Non-Beta",0.49],["2025-09-07","staff","Non-Beta",0.45],["2025-09-14","staff","Non-Beta",0.47],["2025-09-21","staff","Non-Beta",0.48],["2025-09-28","staff","Non-Beta",0.42],["2025-10-05","staff","Non-Beta",0.44],["2025-10-12","staff","Non-Beta",0.48],["2025-10-19","staff","Non-Beta",0.49],["2025-10-26","staff","Non-Beta",0.46],["2025-11-02","staff","Non-Beta",0.46],["2025-11-09","staff","Non-Beta",0.44],["2025-11-16","staff","Non-Beta",0.43],["2025-11-23","staff","Non-Beta",0.36],["2025-11-30","staff","Non-Beta",0.51],["2025-12-07","staff","Non-Beta",0.52],["2025-12-14","staff","Non-Beta",0.49],["2025-12-21","staff","Non-Beta",0.35],["2025-12-28","staff","Non-Beta",0.42],["2026-01-04","staff","Non-Beta",0.54],["2026-01-11","staff","Non-Beta",0.47],["2026-01-18","staff","Non-Beta",0.51],["2026-01-25","staff","Non-Beta",0.24],["2026-02-01","staff","Non-Beta",0.57],["2026-02-08","staff","Non-Beta",0.58],["2026-02-15","staff","Non-Beta",0.55],["2026-02-22","staff","Non-Beta",0.54],["2026-03-01","staff","Non-Beta",0.58],["2026-03-08","staff","Non-Beta",0.53],["2026-03-15","staff","Non-Beta",0.51],["2026-03-22","staff","Non-Beta",0.53],["2026-03-29","staff","Non-Beta",0.52],["2026-04-05","staff","Non-Beta",0.68],["2026-04-12","staff","Non-Beta",0.58],["2026-04-19","staff","Non-Beta",0.24],
+]);
+
+const allDates = Array.from(allDatesSet).sort();
+const ytdDates = allDates.filter(d => d >= '2026-01-04');
+
+function getSeries(map, dates) { return dates.map(d => map[d]!==undefined?map[d]:null); }
+
+// ── IMPROVED DATE LABELS ──────────────────────────────────────────────────────
+// Show a label at every quarter boundary (Jan, Apr, Jul, Oct) for every year,
+// and force-include it regardless of which day-of-month falls nearest.
+function makeLabels(dates) {
+  // Identify the index closest to each quarter start
+  const quarterMonths = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
+  const labelMap = {}; // index -> label string
+
+  // Group dates by year+quarter
+  const years = [...new Set(dates.map(d => d.slice(0,4)))];
+  years.forEach(yr => {
+    quarterMonths.forEach(qm => {
+      // Find the index of the date in this year/quarter that is closest to the 1st
+      const candidates = dates.map((d, i) => {
+        const dt = new Date(d + 'T00:00:00');
+        if (dt.getFullYear() !== parseInt(yr)) return null;
+        if (dt.getMonth() !== qm) return null;
+        return { i, day: dt.getDate() };
+      }).filter(Boolean);
+      if (!candidates.length) return;
+      // pick the one with smallest day number
+      candidates.sort((a, b) => a.day - b.day);
+      const best = candidates[0];
+      const monthNames = ['Jan','Apr','Apr','Apr','Apr','May','Jul','Jul','Jul','Oct','Oct','Oct'];
+      const qLabels = {0:'Jan', 3:'Apr', 6:'Jul', 9:'Oct'};
+      labelMap[best.i] = `${qLabels[qm]} '${yr.slice(2)}`;
+    });
+  });
+
+  return dates.map((_, i) => labelMap[i] || '');
+}
+
+function trailingAvg(data, win) {
+  return data.map((v,i)=>{
+    const sl=data.slice(Math.max(0,i-win+1),i+1).filter(x=>x!==null);
+    return sl.length>=Math.min(win,4)?sl.reduce((a,b)=>a+b,0)/sl.length:null;
+  });
+}
+function sdBands(data, win, mult) {
+  const upper=[],lower=[];
+  data.forEach((v,i)=>{
+    if(v===null){upper.push(null);lower.push(null);return;}
+    const sl=data.slice(Math.max(0,i-win+1),i+1).filter(x=>x!==null);
+    if(sl.length<4){upper.push(null);lower.push(null);return;}
+    const m=sl.reduce((a,b)=>a+b,0)/sl.length;
+    const sd=Math.sqrt(sl.reduce((a,b)=>a+Math.pow(b-m,2),0)/sl.length);
+    upper.push(m+mult*sd);lower.push(m-mult*sd);
+  });
+  return{upper,lower};
+}
+function sdBandForTable(vals, mult=1.5) {
+  if(vals.length<4) return{upper:null,lower:null,mean:null};
+  const w=vals.slice(-8);
+  const m=w.reduce((a,b)=>a+b,0)/w.length;
+  const sd=Math.sqrt(w.reduce((a,b)=>a+Math.pow(b-m,2),0)/w.length);
+  return{upper:m+mult*sd,lower:m-mult*sd,mean:m,sd};
+}
+
+function renderART(id, data, suffix, isMedian=false) {
+  const valid=isMedian?data.filter(v=>v!==null&&v<SPIKE):data.filter(v=>v!==null);
+  const cur=isMedian?(data.filter(v=>v!==null).pop()):valid[valid.length-1];
+  const prev=valid[valid.length-2];
+  if(cur===undefined||prev===undefined) return;
+  const diff=cur-prev;
+  const sign=diff>=0?'+':'';
+  const relClass=isMedian?(diff<-2?'up':diff>2?'down':'flat'):(diff>0.5?'up':diff<-0.5?'down':'flat');
+  const recent=valid.slice(-4);
+  let trendLabel='→ Mixed',trendClass='flat';
+  if(recent.length>=3){
+    const net=recent[recent.length-1]-recent[0];
+    const avg=recent.reduce((a,b)=>a+b,0)/recent.length;
+    const pct=Math.abs(net)/avg;
+    if(pct<0.10){trendLabel='→ Flat';trendClass='flat';}
+    else{
+      let ups=0,downs=0;
+      for(let i=1;i<recent.length;i++){if(recent[i]>recent[i-1])ups++;else if(recent[i]<recent[i-1])downs++;}
+      if(isMedian){
+        if(downs>=2&&ups===0){trendLabel='↘ Improving';trendClass='up';}
+        else if(ups>=2&&downs===0){trendLabel='↗ Getting worse';trendClass='down';}
+        else{trendLabel=net<0?'↘ Mostly improving':'↗ Mostly worse';trendClass=net<0?'up':'down';}
+      }else{
+        if(ups>=2&&downs===0){trendLabel='↗ Up';trendClass='up';}
+        else if(downs>=2&&ups===0){trendLabel='↘ Down';trendClass='down';}
+        else{trendLabel=net>0?'↗ Mostly up':'↘ Mostly down';trendClass=net>0?'up':'down';}
+      }
+    }
+  }
+  const fmt=v=>suffix==='%'?v.toFixed(1)+'%':v.toFixed(0)+suffix;
+  const isSpikeCur=isMedian&&cur>=SPIKE;
+  document.getElementById(id).innerHTML=`
+    <div class="art-card"><div class="art-label">Absolute</div>
+      <div class="art-value ${isSpikeCur?'flat':''}">${isSpikeCur?'⚠ Spike':fmt(cur)}</div>
+      <div class="art-detail">This week (Apr 19)</div></div>
+    <div class="art-card"><div class="art-label">Relative</div>
+      <div class="art-value ${relClass}">${sign}${isMedian?diff.toFixed(0):diff.toFixed(1)}${suffix==='%'?'pp':suffix}</div>
+      <div class="art-detail">vs prior week (${fmt(prev)})</div></div>
+    <div class="art-card"><div class="art-label">Trending</div>
+      <div class="art-value ${trendClass}">${trendLabel}</div>
+      <div class="art-detail">Last 4 non-spike weeks</div></div>`;
+}
+
+function drawChart(canvasId, rawData, labels, artId, suffix, isMedian=false) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width) return;
+
+  // Reserve space for rotated date labels at bottom
+  const LABEL_H = 52; // px for rotated labels
+  const H = 280;
+  canvas.width = rect.width * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const pad = { top: 16, right: 28, bottom: LABEL_H, left: suffix === '%' ? 52 : 58 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+  const n = rawData.length;
+
+  const masked = isMedian ? rawData.map(v => (v !== null && v < SPIKE) ? v : null) : rawData;
+  const avg = trailingAvg(masked, 4);
+  const { upper, lower } = sdBands(masked, 8, 1.5);
+
+  if (artId) renderART(artId, rawData, suffix, isMedian);
+
+  const validMasked = masked.filter(v => v !== null);
+  const upper_ = upper.filter(v => v !== null);
+  const lower_ = lower.filter(v => v !== null);
+  const allV = [...validMasked, ...upper_, ...lower_];
+  if (!allV.length) return;
+
+  const dMin = Math.min(...allV), dMax = Math.max(...allV);
+  const yPad = (dMax - dMin) * 0.2;
+  const yMin = Math.max(0, Math.floor(dMin - yPad));
+  const yMax = Math.ceil(dMax + yPad);
+  const xP = i => pad.left + (i / (n - 1)) * cw;
+  const yP = v => pad.top + (1 - (v - yMin) / (yMax - yMin)) * ch;
+
+  const range = yMax - yMin;
+  let step = range > 300 ? 100 : range > 100 ? 50 : range > 30 ? 10 : range > 15 ? 5 : range > 5 ? 2 : range > 2 ? 1 : 0.5;
+
+  // Grid lines + Y axis labels
+  ctx.strokeStyle = '#1e2130'; ctx.lineWidth = 1;
+  for (let v = Math.ceil(yMin / step) * step; v <= yMax + 0.001; v += step) {
+    const y = yP(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#636978'; ctx.font = '11px JetBrains Mono'; ctx.textAlign = 'right';
+    const lbl = suffix === '%' ? v.toFixed(0) + '%' : (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0));
+    ctx.fillText(lbl, pad.left - 8, y + 4);
+  }
+
+  // X axis: rotated date labels + quarter vertical rules
+  ctx.save();
+  ctx.font = '10px JetBrains Mono';
+  ctx.fillStyle = '#636978';
+  labels.forEach((lbl, i) => {
+    if (!lbl) return;
+    const x = xP(i);
+
+    // Subtle year-change vertical rule for Jan labels
+    if (lbl.startsWith('Jan')) {
+      ctx.strokeStyle = 'rgba(74,158,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      // Light tick for non-Jan quarters
+      ctx.strokeStyle = 'rgba(99,105,120,0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.moveTo(x, H - pad.bottom); ctx.lineTo(x, H - pad.bottom + 5); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Rotated label
+    ctx.save();
+    ctx.translate(x, H - pad.bottom + 8);
+    ctx.rotate(-Math.PI / 4);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(74,158,255,0.85)';
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillText(lbl, 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+
+  // SD band — more visible fill + solid border
+  const bStart = upper.findIndex(v => v !== null);
+  if (bStart >= 0) {
+    // Filled area
+    ctx.beginPath();
+    let s = false;
+    for (let i = bStart; i < n; i++) {
+      if (upper[i] === null) continue;
+      if (!s) { ctx.moveTo(xP(i), yP(upper[i])); s = true; }
+      else ctx.lineTo(xP(i), yP(upper[i]));
+    }
+    for (let i = n - 1; i >= bStart; i--) {
+      if (lower[i] === null) continue;
+      ctx.lineTo(xP(i), yP(lower[i]));
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(74,158,255,0.11)';
+    ctx.fill();
+
+    // Upper border — solid, more opaque
+    ctx.strokeStyle = 'rgba(74,158,255,0.40)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([]);
+    [upper, lower].forEach(band => {
+      ctx.beginPath(); let st = false;
+      for (let i = bStart; i < n; i++) {
+        if (band[i] === null) continue;
+        if (!st) { ctx.moveTo(xP(i), yP(band[i])); st = true; }
+        else ctx.lineTo(xP(i), yP(band[i]));
+      }
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+  }
+
+  // Raw weekly line (very faint connect-the-dots)
+  ctx.strokeStyle = 'rgba(99,105,120,0.18)'; ctx.lineWidth = 1;
+  ctx.beginPath(); let first = true;
+  masked.forEach((v, i) => {
+    if (v === null) return;
+    if (first) { ctx.moveTo(xP(i), yP(v)); first = false; }
+    else ctx.lineTo(xP(i), yP(v));
+  });
+  ctx.stroke();
+
+  // 4-wk avg line — glowy thick + crisp thin
+  ctx.strokeStyle = 'rgba(74,158,255,0.12)'; ctx.lineWidth = 8; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath(); let as = false;
+  avg.forEach((v, i) => { if (v === null) return; if (!as) { ctx.moveTo(xP(i), yP(v)); as = true; } else ctx.lineTo(xP(i), yP(v)); });
+  ctx.stroke();
+  ctx.strokeStyle = '#4a9eff'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); as = false;
+  avg.forEach((v, i) => { if (v === null) return; if (!as) { ctx.moveTo(xP(i), yP(v)); as = true; } else ctx.lineTo(xP(i), yP(v)); });
+  ctx.stroke();
+
+  // Data points (only recent ~30 weeks + spikes always)
+  rawData.forEach((v, i) => {
+    if (v === null) return;
+    const x = xP(i), isSpk = isMedian && v >= SPIKE;
+    if (isSpk) {
+      const sy = pad.top + 8;
+      ctx.beginPath(); ctx.arc(x, sy, 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(251,191,36,0.15)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, sy, 3, 0, Math.PI * 2); ctx.fillStyle = '#fbbf24'; ctx.fill();
+      ctx.fillStyle = '#fbbf24'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText('⚠', x, sy + 12); return;
+    }
+    if (i < n - 30) return;
+    const y = yP(v);
+    const out = upper[i] !== null && (v > upper[i] || v < lower[i]);
+    if (out) {
+      ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(248,113,113,0.08)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#f87171'; ctx.fill();
+      ctx.fillStyle = '#f87171'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText(suffix === '%' ? v.toFixed(1) + '%' : v.toFixed(0), x, y - 12);
+    } else {
+      ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(99,105,120,0.5)'; ctx.fill();
+    }
+  });
+
+  // Last data point highlight
+  const lastIdx = rawData.reduce((acc, v, i) => v !== null && (!isMedian || v < SPIKE) ? i : acc, -1);
+  if (lastIdx >= 0) {
+    const v = rawData[lastIdx], x = xP(lastIdx), y = yP(v);
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#4a9eff'; ctx.fill();
+    ctx.fillStyle = '#4a9eff'; ctx.font = '500 10px JetBrains Mono'; ctx.textAlign = 'center';
+    ctx.fillText(suffix === '%' ? v.toFixed(1) + '%' : v.toFixed(0) + (suffix === 'hrs' ? 'h' : ''), x, y - 12);
+  }
+}
+
+function makeSpark(values, isMedian=false) {
+  const clean=values.filter(v=>v!==null&&(!isMedian||v<SPIKE));
+  if(clean.length<2) return '<span style="color:var(--text-muted)">—</span>';
+  const mn=Math.min(...clean),mx=Math.max(...clean),range=mx-mn||1;
+  const W=80,H=24,p=2;
+  let path='';let started=false;
+  values.forEach((v,i)=>{
+    if(v===null||(isMedian&&v>=SPIKE)){started=false;return;}
+    const x=p+(i/(values.length-1))*(W-p*2);
+    const y=H-p-((v-mn)/range)*(H-p*2);
+    path+=started?`L${x.toFixed(1)},${y.toFixed(1)}`:`M${x.toFixed(1)},${y.toFixed(1)}`;
+    started=true;
+  });
+  const validPts=values.map((v,i)=>({v,i})).filter(({v})=>v!==null&&(!isMedian||v<SPIKE));
+  if(!validPts.length) return '—';
+  const fp=validPts[0],lp=validPts[validPts.length-1];
+  const improved=isMedian?lp.v<fp.v:lp.v>fp.v;
+  const color=improved?'#34d399':lp.v===fp.v?'#636978':'#f87171';
+  const lx=p+(lp.i/(values.length-1))*(W-p*2);
+  const ly=H-p-((lp.v-mn)/range)*(H-p*2);
+  return`<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <path d="${path}" stroke="${color}" stroke-width="1.5" fill="none" opacity="0.85"/>
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+
+function shortName(n) {
+  if(n==='New Family Registration') return 'New Families';
+  if(n==='LifeGroup Interest') return 'LifeGroups';
+  if(n==='Renewing Commitment to Christ') return 'Renewing Commitment';
+  return n;
+}
+
+function buildCompTable() {
+  const order=['LifeGroup Interest','All Connections','Commit to Christ',"I'm New",'New Family Registration','Prayer Request','Baptism','Renewing Commitment to Christ','Serving Interest'];
+  const tbody=document.getElementById('completion-tbody');
+  order.forEach(name=>{
+    const map=compByType[name]||{};
+    const ytd=ytdDates.map(d=>map[d]!==undefined?map[d]:null);
+    const vals=ytd.filter(v=>v!==null);
+    if(!vals.length) return;
+    const cur=vals[vals.length-1];
+    const r4=vals.slice(-4),r8=vals.slice(-8);
+    const a4=r4.reduce((a,b)=>a+b,0)/r4.length;
+    const a8=r8.reduce((a,b)=>a+b,0)/r8.length;
+    const aYTD=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const{upper,lower}=sdBandForTable(vals.slice(0,-1));
+    const outHigh=upper!==null&&cur>upper,outLow=upper!==null&&cur<lower,outBand=outHigh||outLow;
+    const recent=vals.slice(-5),net=recent[recent.length-1]-recent[0];
+    const pct=Math.abs(net)/aYTD;
+    const tTxt=pct<0.10?'→ Flat':net>0?'↗ Up':'↘ Down';
+    const tCls=tTxt.includes('Up')?'val-up':tTxt.includes('Down')?'val-down':'val-flat';
+    const isLG=name==='LifeGroup Interest';
+    const curCls=outHigh?'val-up':outLow?'val-down':'val-mono';
+    const sdBadge=outBand?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-family:'JetBrains Mono',monospace;background:${outHigh?'rgba(52,211,153,0.12)':'rgba(248,113,113,0.12)'};color:${outHigh?'#34d399':'#f87171'}">±1.5σ ${outHigh?'▲':'▼'}</span>`:'';
+    const tr=document.createElement('tr');
+    if(outBand) tr.style.background=outHigh?'rgba(52,211,153,0.04)':'rgba(248,113,113,0.04)';
+    tr.innerHTML=`<td class="cat-name">${isLG?'<span class="star">★</span> ':''}${shortName(name)}</td>
+      <td class="${curCls}">${cur.toFixed(1)}%${sdBadge}</td>
+      <td class="val-mono">${a4.toFixed(1)}%</td><td class="val-mono">${a8.toFixed(1)}%</td>
+      <td class="val-mono">${aYTD.toFixed(1)}%</td><td class="${tCls}">${tTxt}</td>
+      <td>${makeSpark(ytd)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function buildMedianTable() {
+  const order=['LifeGroup Interest','All Connections',"I'm New",'Prayer Request','New Family Registration','Renewing Commitment to Christ','Baptism','Serving Interest','Commit to Christ'];
+  const tbody=document.getElementById('median-tbody');
+  order.forEach(name=>{
+    const map=medByType[name]||{};
+    const ytd=ytdDates.map(d=>map[d]!==undefined?map[d]:null);
+    const clean=ytd.filter(v=>v!==null&&v<SPIKE);
+    if(!clean.length) return;
+    const cur=ytd.filter(v=>v!==null).pop();
+    const isSpike=cur>=SPIKE;
+    const r4=ytd.slice(-4).filter(v=>v!==null&&v<SPIKE);
+    const r8=ytd.slice(-8).filter(v=>v!==null&&v<SPIKE);
+    const a4=r4.length?r4.reduce((a,b)=>a+b,0)/r4.length:null;
+    const a8=r8.length?r8.reduce((a,b)=>a+b,0)/r8.length:null;
+    const aYTD=clean.reduce((a,b)=>a+b,0)/clean.length;
+    const priorClean=clean.slice(0,-1);
+    const{upper,lower}=sdBandForTable(priorClean);
+    const outHigh=!isSpike&&upper!==null&&cur>upper,outLow=!isSpike&&upper!==null&&cur<lower,outBand=outHigh||outLow;
+    const isLG=name==='LifeGroup Interest';
+    const curCls=isSpike?'val-warn':outHigh?'val-down':outLow?'val-up':'val-mono';
+    const curTxt=isSpike?`⚠ ${cur.toLocaleString()} hrs`:`${cur} hrs`;
+    const sdBadge=outBand?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-family:'JetBrains Mono',monospace;background:${outHigh?'rgba(248,113,113,0.12)':'rgba(52,211,153,0.12)'};color:${outHigh?'#f87171':'#34d399'}">±1.5σ ${outHigh?'▲':'▼'}</span>`:'';
+    const status=isSpike?'<span class="val-warn">⚠ Spike</span>':name==='Commit to Christ'?'<span class="val-warn">⚠ Erratic</span>':cur<=24?'<span class="val-up">✓ Strong</span>':cur>200?'<span class="val-down">↘ Slow</span>':'<span class="val-flat">→ OK</span>';
+    const tr=document.createElement('tr');
+    if(outBand&&!isSpike) tr.style.background=outHigh?'rgba(248,113,113,0.04)':'rgba(52,211,153,0.04)';
+    tr.innerHTML=`<td class="cat-name">${isLG?'<span class="star">★</span> ':''}${shortName(name)}</td>
+      <td class="${curCls}">${curTxt}${sdBadge}</td>
+      <td class="val-mono">${a4?a4.toFixed(0)+' hrs':'—'}</td><td class="val-mono">${a8?a8.toFixed(0)+' hrs':'—'}</td>
+      <td class="${aYTD>200?'val-down':'val-mono'}">${aYTD.toFixed(0)} hrs</td>
+      <td>${status}</td><td>${makeSpark(ytd,true)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function buildStaffTable() {
+  const groups=[{label:'Total',map:staffTotal},{label:'Beta Follow-Up',map:staffBeta},{label:'Non-Beta',map:staffNonBeta}];
+  const tbody=document.getElementById('staff-tbody');
+  groups.forEach(({label,map})=>{
+    const ytd=ytdDates.map(d=>map[d]!==undefined?map[d]:null);
+    const vals=ytd.filter(v=>v!==null);
+    if(!vals.length) return;
+    const cur=vals[vals.length-1];
+    const r4=vals.slice(-4),r8=vals.slice(-8);
+    const a4=r4.reduce((a,b)=>a+b,0)/r4.length;
+    const a8=r8.reduce((a,b)=>a+b,0)/r8.length;
+    const aYTD=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const{upper,lower}=sdBandForTable(vals.slice(0,-1));
+    const outHigh=upper!==null&&cur>upper,outLow=upper!==null&&cur<lower,outBand=outHigh||outLow;
+    const recent=vals.slice(-5),net=recent[recent.length-1]-recent[0];
+    const pct=Math.abs(net)/aYTD;
+    const tTxt=pct<0.10?'→ Flat':net>0?'↗ Up':'↘ Down';
+    const tCls=tTxt.includes('Up')?'val-up':tTxt.includes('Down')?'val-down':'val-flat';
+    const curCls=outHigh?'val-up':outLow?'val-down':'val-mono';
+    const sdBadge=outBand?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-family:'JetBrains Mono',monospace;background:${outHigh?'rgba(52,211,153,0.12)':'rgba(248,113,113,0.12)'};color:${outHigh?'#34d399':'#f87171'}">±1.5σ ${outHigh?'▲':'▼'}</span>`:'';
+    const tr=document.createElement('tr');
+    if(outBand) tr.style.background=outHigh?'rgba(52,211,153,0.04)':'rgba(248,113,113,0.04)';
+    tr.innerHTML=`<td class="cat-name">${label}</td>
+      <td class="${curCls}">${cur.toFixed(1)}%${sdBadge}</td>
+      <td class="val-mono">${a4.toFixed(1)}%</td><td class="val-mono">${a8.toFixed(1)}%</td>
+      <td class="val-mono">${aYTD.toFixed(1)}%</td><td class="${tCls}">${tTxt}</td>
+      <td>${makeSpark(ytd)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+const fullLabels = makeLabels(allDates);
+const compSeries = getSeries(compAll, allDates);
+const medSeries  = getSeries(medAll,  allDates);
+const staffSeries= getSeries(staffTotal, allDates);
+
+buildCompTable();
+buildMedianTable();
+buildStaffTable();
+populateExecSummary();
+
+// Don't draw charts on load — page-overview is hidden; draw on first tab visit
+window.addEventListener('resize', () => {
+  if (chartsDrawn) drawCharts();
+});
+</script>
+</body>
+</html>
